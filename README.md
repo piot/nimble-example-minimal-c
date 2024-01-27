@@ -1,0 +1,1 @@
+# nimble-example-minimal-c
