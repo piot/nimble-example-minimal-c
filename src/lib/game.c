@@ -6,7 +6,13 @@
 
 void exampleGameInit(ExampleGame* self)
 {
-    self->positionX = 0;
-    self->positionY = 0;
-    self->jumpTimer = 0;
+    self->snake.x[0] = 2;
+    self->snake.y[0] = 2;
+    self->snake.length = 1;
+
+    self->food.x = 4;
+    self->food.y = 4;
+    self->pseudoRandom = 0;
+    self->gameIsOver = false;
+    self->ticksBetweenMoves = 10;
 }

@@ -10,6 +10,7 @@
 
 typedef struct ExamplePlayerInGameInput {
     int8_t horizontalAxis;
+    int8_t verticalAxis;
     bool wantsToJump;
 } ExamplePlayerInGameInput;
 

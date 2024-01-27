@@ -5,6 +5,13 @@
 #include <example/gamepad.h>
 #include <ncurses.h>
 
+void exampleGamepadInit(ExampleGamepad* self)
+{
+    self->internalState.horizontal = 0;
+    self->internalState.vertical = 0;
+    self->internalState.buttons = 0;
+}
+
 void exampleGamepadUpdate(ExampleGamepad* self)
 {
     int ch = getch();
@@ -14,15 +21,19 @@ void exampleGamepadUpdate(ExampleGamepad* self)
     switch (ch) {
     case KEY_LEFT:
         state->horizontal = -1;
+        state->vertical = 0;
         break;
     case KEY_RIGHT:
         state->horizontal = 1;
+        state->vertical = 0;
         break;
     case KEY_UP:
-        state->buttons = 1;
+        state->vertical = 1;
+        state->horizontal = 0;
         break;
     case KEY_DOWN:
-        state->buttons = 0;
+        state->vertical = -1;
+        state->horizontal = 0;
         break;
     }
 }

@@ -17,6 +17,7 @@ typedef struct ExampleGamepad {
     ExampleGamepadState internalState;
 } ExampleGamepad;
 
+void exampleGamepadInit(ExampleGamepad* self);
 void exampleGamepadUpdate(ExampleGamepad* self);
 void exampleGamepadRead(ExampleGamepad* self, ExampleGamepadState* state);
 

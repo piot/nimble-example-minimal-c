@@ -7,7 +7,9 @@
 
 #include <example/game.h>
 typedef struct ExampleRender {
-    int dummy;
+    int numberOfRows;
+    int numberOfColumns;
+    int xOffset;
 } ExampleRender;
 
 void exampleRenderInit(ExampleRender* self);

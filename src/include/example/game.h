@@ -5,15 +5,39 @@
 #ifndef NIMBLE_EXAMPLE_MINIMAL_GAME_H
 #define NIMBLE_EXAMPLE_MINIMAL_GAME_H
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#define NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH (20)
+
+typedef enum ExampleDirection {
+    ExampleDirectionUp,
+    ExampleDirectionRight,
+    ExampleDirectionDown,
+    ExampleDirectionLeft,
+} ExampleDirection;
+
+typedef struct ExampleSnake {
+    int x[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
+    int y[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
+    int length;
+    ExampleDirection movementDirection;
+} ExampleSnake;
+
+typedef struct ExampleFood {
+    int x;
+    int y;
+} ExampleFood;
 
 typedef struct ExampleGame {
-    int positionX;
-    int positionY;
-    size_t jumpTimer;
+    ExampleSnake snake;
+    ExampleFood food;
+    uint32_t pseudoRandom;
+    bool gameIsOver;
+    uint32_t ticksBetweenMoves;
 } ExampleGame;
 
 void exampleGameInit(ExampleGame* self);
 
 #endif
-
