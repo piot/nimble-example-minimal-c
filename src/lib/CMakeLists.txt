@@ -2,14 +2,16 @@
 cmake_minimum_required(VERSION 3.16.3)
 
 add_executable(nimble-minimal-example
-  game.c
-  gamepad.c
-  host.c
-  input.c
-  main.c
-  render.c
-  simulation.c
-  sleep.c)
+        client.c
+        game.c
+        game_app.c
+        gamepad.c
+        host.c
+        input.c
+        main.c
+        render.c
+        simulation.c
+        sleep.c)
 
 include(Tornado.cmake)
 set_tornado(nimble-minimal-example)
@@ -18,8 +20,8 @@ target_include_directories(nimble-minimal-example PRIVATE ../include)
 
 
 target_link_libraries(nimble-minimal-example PUBLIC
-  nimble
-  transport-stack)
+        nimble
+        transport-stack)
 
 
 find_package(Curses REQUIRED)

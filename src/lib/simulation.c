@@ -18,7 +18,7 @@ static void snakeMoveWithFront(ExampleSnake* snake)
     }
 }
 
-static void snakeSetDirectionFromInput(ExampleSnake* snake, ExamplePlayerInGameInput* pad)
+static void snakeSetDirectionFromInput(ExampleSnake* snake, const ExamplePlayerInGameInput* pad)
 {
     if (pad->horizontalAxis < 0) {
         snake->movementDirection = ExampleDirectionLeft;
@@ -57,7 +57,7 @@ static uint32_t pseudoRandomNext(uint32_t* seed)
     return *seed;
 }
 
-void exampleSimulationTick(ExampleGame* game, ExamplePlayerInput* input)
+void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInput* input)
 {
     if (game->ticksBetweenMoves != 0) {
         game->ticksBetweenMoves--;
@@ -72,7 +72,7 @@ void exampleSimulationTick(ExampleGame* game, ExamplePlayerInput* input)
 
     switch (input->inputType) {
     case ExamplePlayerInputTypeInGame: {
-        ExamplePlayerInGameInput* pad = &input->input.inGameInput;
+        const ExamplePlayerInGameInput* pad = &input->input.inGameInput;
         ExampleSnake* snake = &game->snake;
 
         // Check if eaten food

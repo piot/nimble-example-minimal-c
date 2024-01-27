@@ -6,7 +6,7 @@
 #include <example/host.h>
 #include <example/input.h>
 
-void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion* applicationVersion,
+void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion applicationVersion,
     ImprintAllocator* allocator, ImprintAllocatorWithFree* allocatorWithFree)
 {
     Clog multiLog;
@@ -27,23 +27,23 @@ void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion* applicatio
     serverLog.config = &g_clog;
     serverLog.constantPrefix = "NimbleServer";
 
-    NimbleServerSetup serverSetup;
-    serverSetup.maxSingleParticipantStepOctetCount = maxSingleParticipantStepOctetCount;
-    serverSetup.maxParticipantCount = maxParticipantCount;
-    serverSetup.maxConnectionCount = maxConnectionCount;
-    serverSetup.maxParticipantCountForEachConnection = 1;
-    serverSetup.maxWaitingForReconnectTicks = 62 * 20;
-    serverSetup.maxGameStateOctetCount = sizeof(ExampleGame);
-    serverSetup.memory = allocator;
-    serverSetup.blobAllocator = allocatorWithFree;
-    serverSetup.applicationVersion = *applicationVersion;
-    serverSetup.now = monotonicTimeMsNow();
-    serverSetup.log = serverLog;
-    serverSetup.multiTransport = self->multiTransport.multiTransport;
+    const NimbleServerSetup serverSetup
+        = { .maxSingleParticipantStepOctetCount = maxSingleParticipantStepOctetCount,
+              .maxParticipantCount = maxParticipantCount,
+              .maxConnectionCount = maxConnectionCount,
+              .maxParticipantCountForEachConnection = 1,
+              .maxWaitingForReconnectTicks = 62 * 20,
+              .maxGameStateOctetCount = sizeof(ExampleGame),
+              .memory = allocator,
+              .blobAllocator = allocatorWithFree,
+              .applicationVersion = applicationVersion,
+              .now = monotonicTimeMsNow(),
+              .log = serverLog,
+              .multiTransport = self->multiTransport.multiTransport };
 
     CLOG_INFO("initialize nimble server")
 
-    int errorCode = nimbleServerInit(&self->nimbleServer, serverSetup);
+    const int errorCode = nimbleServerInit(&self->nimbleServer, serverSetup);
     if (errorCode < 0) {
         CLOG_ERROR("could not initialize nimble server %d", errorCode)
         // return errorCode;
@@ -56,7 +56,7 @@ void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion* applicatio
     // We just add a completely empty game. But it could be setup
     // with specific rules or game mode or similar
     // Since the whole game is blittable structs with no pointers, we can just cast it to an (uint8_t*)
-    StepId stepId = 0xcafeU;
+    const StepId stepId = 0xcafeU;
     nimbleServerReInitWithGame(&self->nimbleServer, (const uint8_t*)&initialServerState,
         sizeof(initialServerState), stepId, monotonicTimeMsNow());
 

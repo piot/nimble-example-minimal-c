@@ -15,7 +15,7 @@ typedef struct ExampleHost {
     Clog log;
 } ExampleHost;
 
-void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion* applicationVersion,
+void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion applicationVersion,
     ImprintAllocator* allocator, ImprintAllocatorWithFree* allocatorWithFree);
 void exampleHostUpdate(ExampleHost* self);
 
