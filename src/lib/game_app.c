@@ -55,7 +55,7 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
         input.inputType = ExamplePlayerInputTypeWaitingForReconnect;
         break;
     case TransmuteParticipantInputTypeNormal:
-        input.input.inGameInput = *(const ExamplePlayerInGameInput*)firstPlayer->input;
+        input = *(const ExamplePlayerInput*)firstPlayer->input;
         input.inputType = ExamplePlayerInputTypeInGame;
     }
 

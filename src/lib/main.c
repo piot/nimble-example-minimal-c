@@ -13,7 +13,7 @@
 
 #include <imprint/default_setup.h>
 
-// #define USE_RENDER
+ #define USE_RENDER
 
 clog_config g_clog;
 
@@ -170,7 +170,7 @@ int main(void)
     }
 
 #if defined USE_RENDER
-    exampleRenderClose(&render);
+    //exampleRenderClose(&render);
 #endif
 
 //    return 0;

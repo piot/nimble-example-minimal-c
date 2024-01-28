@@ -57,6 +57,9 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
         self, allocator, allocatorWithFree, TransportStackModeLocalUdp, singleLog);
 
     transportStackSingleConnect(self, "127.0.0.1", 23000);
+
+    transportStackLowerLevelSetInternetSimulationMode(
+        &self->lowerLevel, TransportStackInternetSimulationModeRecommended);
 }
 
 void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
