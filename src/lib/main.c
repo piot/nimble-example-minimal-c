@@ -9,12 +9,11 @@
 #include <example/host.h>
 #include <example/input.h>
 #include <example/render.h>
-#include <example/simulation.h>
 #include <example/sleep.h>
 
 #include <imprint/default_setup.h>
 
-#define USE_RENDER
+// #define USE_RENDER
 
 clog_config g_clog;
 
@@ -115,10 +114,25 @@ int main(void)
 
     ExampleApp app;
 
+    Clog gameAppClog = {
+        .constantPrefix = "exampleGameApp",
+        .config = &g_clog,
+    };
+    const StepId authoritativeStepId = { 0x8BADF00D };
+    gameAppInit(&app.combinedGame, authoritativeStepId, gameAppClog);
+
     exampleGameInit(&app.combinedGame.authoritativeGame);
     exampleGameInit(&app.combinedGame.predictedGame);
 
-    exampleHostInit(&app.host, applicationVersion, allocator, allocatorWithFree);
+    NimbleServerCallbackObjectVtbl serverCallbackKlass = {
+        .authoritativeStateSerializeFn = gameAppAuthoritativeSerialize,
+    };
+
+    NimbleServerCallbackObject serverCallbackObject
+        = { .vtbl = &serverCallbackKlass, .self = &app.combinedGame };
+
+    exampleHostInit(&app.host, serverCallbackObject, app.combinedGame.authoritativeStepId,
+        applicationVersion, allocator, allocatorWithFree);
 
     RectifyCallbackObjectVtbl callbackKlass = {
         .preAuthoritativeTicksFn = gameAppPreAuthoritativeTicks,

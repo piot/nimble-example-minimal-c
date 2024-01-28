@@ -7,49 +7,68 @@
 #include <example/input.h>
 #include <example/simulation.h>
 
+void gameAppInit(ExampleGameApp* self, StepId authoritativeStepId, Clog log)
+{
+    self->log = log;
+    self->authoritativeStepId = authoritativeStepId;
+}
+
+void gameAppAuthoritativeSerialize(void* _self, NimbleServerSerializedGameState* state)
+{
+    ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_INFO(&self->log, "authoritativeSerialize()")
+
+    state->gameState = (const uint8_t*)&self->authoritativeGame;
+    state->stepId = self->authoritativeStepId;
+    state->gameStateOctetCount = sizeof(self->authoritativeGame);
+}
+
 void gameAppAuthoritativeDeserialize(void* _self, const TransmuteState* state)
 {
-    CLOG_INFO("authoritativeDeserialize()")
     ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_INFO(&self->log, "authoritativeDeserialize()")
 
     self->authoritativeGame = *((const ExampleGame*)state->state);
 }
 
 void gameAppPreAuthoritativeTicks(void* _self)
 {
-    //ExampleGameApp* self = (ExampleGameApp*)_self;
-    (void)_self;
-    CLOG_INFO("preAuthoritativeTicks()")
+    ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_VERBOSE(&self->log, "preAuthoritativeTicks()")
 }
 
 void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_INFO("authoritativeTick()")
+    CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
 
     const ExamplePlayerInput* input = (const ExamplePlayerInput*)_input->participantInputs[0].input;
 
     exampleSimulationTick(&self->authoritativeGame, input);
+    self->authoritativeStepId++;
 }
 
 void gameAppCopyFromAuthoritativeToPrediction(void* _self, StepId tickId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_INFO("CopyFromAuthoritative()")
+    CLOG_C_INFO(&self->log, "CopyFromAuthoritative()")
     (void)tickId;
+    CLOG_ASSERT(tickId == self->authoritativeStepId, "authoritative tick ID is wrong")
     self->predictedGame = self->authoritativeGame;
+    self->predictedStepId = self->authoritativeStepId;
 }
 
 void gameAppPredictionTick(void* _self, const TransmuteInput* _input)
 {
-    CLOG_INFO("PredictionTick()")
-    const ExamplePlayerInput* input = (const ExamplePlayerInput*)_input->participantInputs[0].input;
     ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_VERBOSE(&self->log, "PredictionTick()")
+    const ExamplePlayerInput* input = (const ExamplePlayerInput*)_input->participantInputs[0].input;
     exampleSimulationTick(&self->predictedGame, input);
+    self->predictedStepId++;
 }
 
 void gameAppPredictionPostPredictionTicks(void* _self)
 {
-    (void)_self;
-    CLOG_INFO("PostPredictionTick()")
+    ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_VERBOSE(&self->log, "PostPredictionTick()")
 }

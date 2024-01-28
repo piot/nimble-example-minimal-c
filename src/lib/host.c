@@ -6,7 +6,7 @@
 #include <example/host.h>
 #include <example/input.h>
 
-void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion applicationVersion,
+void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObject, StepId authoritativeStepId, const NimbleSerializeVersion applicationVersion,
     ImprintAllocator* allocator, ImprintAllocatorWithFree* allocatorWithFree)
 {
     Clog multiLog;
@@ -17,7 +17,7 @@ void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion application
     transportStackMultiInit(
         &self->multiTransport, allocator, allocatorWithFree, TransportStackModeLocalUdp, multiLog);
 
-    transportStackMultiListen(&self->multiTransport, "localhost", 23000);
+    transportStackMultiListen(&self->multiTransport, "127.0.0.1", 23000);
 
     const size_t maxConnectionCount = 4U;
     const size_t maxParticipantCount = 2;
@@ -34,6 +34,7 @@ void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion application
               .maxParticipantCountForEachConnection = 1,
               .maxWaitingForReconnectTicks = 62 * 20,
               .maxGameStateOctetCount = sizeof(ExampleGame),
+              .callbackObject = callbackObject,
               .memory = allocator,
               .blobAllocator = allocatorWithFree,
               .applicationVersion = applicationVersion,
@@ -56,12 +57,7 @@ void exampleHostInit(ExampleHost* self, const NimbleSerializeVersion application
     // We just add a completely empty game. But it could be setup
     // with specific rules or game mode or similar
     // Since the whole game is blittable structs with no pointers, we can just cast it to an (uint8_t*)
-    const StepId stepId = 0xcafeU;
-    nimbleServerReInitWithGame(&self->nimbleServer, (const uint8_t*)&initialServerState,
-        sizeof(initialServerState), stepId, monotonicTimeMsNow());
-
-    CLOG_INFO("nimble server has initial game state. octet count: %zu",
-        self->nimbleServer.game.latestState.octetCount)
+    nimbleServerReInitWithGame(&self->nimbleServer, authoritativeStepId, monotonicTimeMsNow());
 }
 
 void exampleHostUpdate(ExampleHost* self)

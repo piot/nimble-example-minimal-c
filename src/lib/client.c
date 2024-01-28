@@ -6,14 +6,12 @@
 #include <example/input.h>
 #include <imprint/allocator.h>
 
-
 /// Initializes a nimble engine client on a previously setup single datagram transport
-static void initNimbleEngineClient(NimbleEngineClient* self, RectifyCallbackObject callbackObject, DatagramTransport singleTransport,
-    NimbleSerializeVersion applicationVersion, ImprintAllocator* allocator,
-    ImprintAllocatorWithFree* allocatorWithFree)
+static void initNimbleEngineClient(NimbleEngineClient* self, RectifyCallbackObject callbackObject,
+    DatagramTransport singleTransport, NimbleSerializeVersion applicationVersion,
+    ImprintAllocator* allocator, ImprintAllocatorWithFree* allocatorWithFree)
 {
     CLOG_DEBUG("start joining")
-    // app->frontend.phase = NlFrontendPhaseJoining;
 
     CLOG_DEBUG("client datagram transport is set")
 
@@ -58,20 +56,27 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
     transportStackSingleInit(
         self, allocator, allocatorWithFree, TransportStackModeLocalUdp, singleLog);
 
-    transportStackSingleConnect(self, "localhost", 23000);
+    transportStackSingleConnect(self, "127.0.0.1", 23000);
 }
 
-void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject, NimbleSerializeVersion version, ImprintAllocator* allocator,
+void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
+    NimbleSerializeVersion version, ImprintAllocator* allocator,
     ImprintAllocatorWithFree* allocatorWithFree)
 {
     setupSingleTransport(&self->singleTransport, allocator, allocatorWithFree);
-    initNimbleEngineClient(&self->nimbleEngineClient, callbackObject, self->singleTransport.singleTransport,
-        version, allocator, allocatorWithFree);
+    initNimbleEngineClient(&self->nimbleEngineClient, callbackObject,
+        self->singleTransport.singleTransport, version, allocator, allocatorWithFree);
     join(self);
 }
 
-
 void exampleClientUpdate(ExampleClient* self)
 {
-    nimbleEngineClientUpdate(&self->nimbleEngineClient);
+    transportStackSingleUpdate(&self->singleTransport);
+    if (transportStackSingleIsConnected(&self->singleTransport)) {
+        nimbleEngineClientUpdate(&self->nimbleEngineClient);
+    } else {
+        // This is just to make sure transport is settled
+        uint8_t buf[UDP_CLIENT_MAX_OCTET_SIZE];
+        datagramTransportReceive(&self->singleTransport.singleTransport, buf, 1200);
+    }
 }
