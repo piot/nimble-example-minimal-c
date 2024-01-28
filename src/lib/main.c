@@ -148,8 +148,7 @@ int main(void)
         .self = &app.combinedGame,
     };
 
-    exampleClientInit(
-        &app.client, callbackObject, applicationVersion, allocator, allocatorWithFree);
+    exampleClientInit( &app.client, callbackObject, applicationVersion, allocator, allocatorWithFree);
 
 #if defined USE_RENDER
     ExampleRender render;
@@ -158,7 +157,7 @@ int main(void)
     ExampleGamepad gamepad;
     exampleGamepadInit(&gamepad);
 
-    while (!app.combinedGame.authoritativeGame.gameIsOver) {
+    while (1) {
 
 #if defined USE_RENDER
         exampleRenderUpdate(
@@ -174,5 +173,5 @@ int main(void)
     exampleRenderClose(&render);
 #endif
 
-    return 0;
+//    return 0;
 }

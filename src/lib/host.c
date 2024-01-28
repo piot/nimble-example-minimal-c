@@ -6,7 +6,8 @@
 #include <example/host.h>
 #include <example/input.h>
 
-void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObject, StepId authoritativeStepId, const NimbleSerializeVersion applicationVersion,
+void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObject,
+    StepId authoritativeStepId, const NimbleSerializeVersion applicationVersion,
     ImprintAllocator* allocator, ImprintAllocatorWithFree* allocatorWithFree)
 {
     Clog multiLog;
@@ -36,6 +37,7 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
               .maxGameStateOctetCount = sizeof(ExampleGame),
               .callbackObject = callbackObject,
               .memory = allocator,
+              .targetTickTimeMs = 24,
               .blobAllocator = allocatorWithFree,
               .applicationVersion = applicationVersion,
               .now = monotonicTimeMsNow(),
@@ -54,6 +56,12 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
     ExampleGame initialServerState;
     exampleGameInit(&initialServerState);
 
+    Clog exampleServerLog;
+    exampleServerLog.config = &g_clog;
+    exampleServerLog.constantPrefix = "exampleServer";
+
+    self->log = exampleServerLog;
+
     // We just add a completely empty game. But it could be setup
     // with specific rules or game mode or similar
     // Since the whole game is blittable structs with no pointers, we can just cast it to an (uint8_t*)
@@ -62,7 +70,7 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
 
 void exampleHostUpdate(ExampleHost* self)
 {
-    CLOG_VERBOSE("host update()")
+    CLOG_C_VERBOSE(&self->log, "host update()")
     transportStackMultiUpdate(&self->multiTransport);
     nimbleServerUpdate(&self->nimbleServer, monotonicTimeMsNow());
 }

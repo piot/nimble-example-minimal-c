@@ -42,9 +42,24 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
 
-    const ExamplePlayerInput* input = (const ExamplePlayerInput*)_input->participantInputs[0].input;
+    ExamplePlayerInput input;
 
-    exampleSimulationTick(&self->authoritativeGame, input);
+    const TransmuteParticipantInput* firstPlayer = &_input->participantInputs[0];
+    switch (firstPlayer->inputType) {
+    case TransmuteParticipantInputTypeNoInputInTime:
+        CLOG_C_NOTICE(&self->log, "authoritativeTick(noInputInTime)")
+        input.inputType = ExamplePlayerInputTypeForced;
+        break;
+    case TransmuteParticipantInputTypeWaitingForReconnect:
+        CLOG_C_NOTICE(&self->log, "authoritativeTick(waitingForReconnect)")
+        input.inputType = ExamplePlayerInputTypeWaitingForReconnect;
+        break;
+    case TransmuteParticipantInputTypeNormal:
+        input.input.inGameInput = *(const ExamplePlayerInGameInput*)firstPlayer->input;
+        input.inputType = ExamplePlayerInputTypeInGame;
+    }
+
+    exampleSimulationTick(&self->authoritativeGame, &input);
     self->authoritativeStepId++;
 }
 
