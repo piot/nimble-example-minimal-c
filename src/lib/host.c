@@ -53,9 +53,6 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
     }
     CLOG_INFO("nimble server is initialized")
 
-    ExampleGame initialServerState;
-    exampleGameInit(&initialServerState);
-
     Clog exampleServerLog;
     exampleServerLog.config = &g_clog;
     exampleServerLog.constantPrefix = "exampleServer";

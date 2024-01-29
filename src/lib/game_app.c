@@ -33,8 +33,12 @@ void gameAppAuthoritativeDeserialize(void* _self, const TransmuteState* state)
 
 void gameAppPreAuthoritativeTicks(void* _self)
 {
+#if defined CLOG_ENABLED
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "preAuthoritativeTicks()")
+#else
+    (void)_self;
+#endif
 }
 
 void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
@@ -84,6 +88,10 @@ void gameAppPredictionTick(void* _self, const TransmuteInput* _input)
 
 void gameAppPredictionPostPredictionTicks(void* _self)
 {
+#if defined CLOG_ENABLED
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "PostPredictionTick()")
+#else
+    (void)_self;
+#endif
 }
