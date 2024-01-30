@@ -41,21 +41,21 @@ void gameAppPreAuthoritativeTicks(void* _self)
 #endif
 }
 
-void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
+static void gameAppTick(ExampleGame* game, const TransmuteInput* _input, Clog* log)
 {
-    ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
-
     ExamplePlayerInput input;
+#if !defined CLOG_LOG_ENABLED
+    (void) log;
+#endif
 
     const TransmuteParticipantInput* firstPlayer = &_input->participantInputs[0];
     switch (firstPlayer->inputType) {
     case TransmuteParticipantInputTypeNoInputInTime:
-        CLOG_C_NOTICE(&self->log, "authoritativeTick(noInputInTime)")
+        CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
         input.inputType = ExamplePlayerInputTypeForced;
         break;
     case TransmuteParticipantInputTypeWaitingForReconnect:
-        CLOG_C_NOTICE(&self->log, "authoritativeTick(waitingForReconnect)")
+        CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
         input.inputType = ExamplePlayerInputTypeWaitingForReconnect;
         break;
     case TransmuteParticipantInputTypeNormal:
@@ -63,7 +63,15 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
         input.inputType = ExamplePlayerInputTypeInGame;
     }
 
-    exampleSimulationTick(&self->authoritativeGame, &input);
+    exampleSimulationTick(game, &input);
+}
+
+void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
+{
+    ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
+
+    gameAppTick(&self->authoritativeGame, _input, &self->log);
     self->authoritativeStepId++;
 }
 
@@ -81,8 +89,7 @@ void gameAppPredictionTick(void* _self, const TransmuteInput* _input)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "PredictionTick()")
-    const ExamplePlayerInput* input = (const ExamplePlayerInput*)_input->participantInputs[0].input;
-    exampleSimulationTick(&self->predictedGame, input);
+    gameAppTick(&self->predictedGame, _input, &self->log);
     self->predictedStepId++;
 }
 
