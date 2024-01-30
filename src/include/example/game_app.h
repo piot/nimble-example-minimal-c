@@ -7,19 +7,25 @@
 
 #include <example/game.h>
 #include <nimble-server/serialized_game_state.h>
+#include <transmute/transmute.h>
+
+struct TransmuteState;
+
+typedef struct ExampleGameAndStepId {
+    ExampleGame game;
+    StepId stepId;
+} ExampleGameAndStepId;
 
 typedef struct ExampleGameApp {
-    ExampleGame authoritativeGame;
-    ExampleGame predictedGame;
-    StepId authoritativeStepId;
-    StepId predictedStepId;
+    ExampleGameAndStepId predicted;
+    ExampleGameAndStepId authoritative;
     Clog log;
 } ExampleGameApp;
 
 void gameAppInit(ExampleGameApp* self, StepId stepId, Clog log);
 
 void gameAppAuthoritativeSerialize(void* _self, NimbleServerSerializedGameState* state);
-void gameAppAuthoritativeDeserialize(void* self, const TransmuteState* state);
+void gameAppAuthoritativeDeserialize(void* self, const TransmuteState* state, StepId stepId);
 void gameAppPreAuthoritativeTicks(void* self);
 void gameAppAuthoritativeTick(void* self, const TransmuteInput* input);
 void gameAppCopyFromAuthoritativeToPrediction(void* self, StepId tickId);

@@ -14,7 +14,7 @@ typedef struct ExampleRender {
 
 void exampleRenderInit(ExampleRender* self);
 void exampleRenderUpdate(
-    ExampleRender* self, ExampleGame* authoritativeGame, ExampleGame* predictedGame);
+    ExampleRender* self, ExampleGameApp* combinedGame);
 void exampleRenderClose(ExampleRender* self);
 
 #endif

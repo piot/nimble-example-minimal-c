@@ -10,7 +10,6 @@
 #include <example/host.h>
 
 typedef struct ExampleApp {
-    ExampleHost host;
     ExampleClient client;
     ExampleGameApp combinedGame;
 } ExampleApp;

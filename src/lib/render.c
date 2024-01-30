@@ -2,6 +2,7 @@
  *  Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/nimble-example-minimal-c
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------------------*/
+#include <example/game_app.h>
 #include <example/render.h>
 #include <ncurses.h>
 
@@ -53,8 +54,9 @@ static void drawGameArea(ExampleRender* self)
     mvvline(upper, right, '*', height);
 }
 
-static void render(ExampleRender* self, ExampleGame* game)
+static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
 {
+    ExampleGame* game = &gameAndStepId->game;
     drawGameArea(self);
     attron(COLOR_PAIR(1));
 
@@ -74,19 +76,24 @@ static void render(ExampleRender* self, ExampleGame* game)
     convertPosition(self, game->food.x, game->food.y, &renderPos);
     mvprintw(renderPos.y, renderPos.x, "@");
     attroff(COLOR_PAIR(2));
+
+    RenderPosition tickIdPos;
+
+    convertPosition(self, 0, 40, &tickIdPos);
+
+    mvprintw(tickIdPos.y, tickIdPos.x, "%04X", gameAndStepId->stepId);
 }
 
-void exampleRenderUpdate(
-    ExampleRender* self, ExampleGame* authoritativeGame, ExampleGame* predictedGame)
+void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame)
 {
     (void)self;
 
     clear();
 
     self->xOffset = 0;
-    render(self, authoritativeGame);
+    render(self, &combinedGame->predicted);
     self->xOffset = 40;
-    render(self, predictedGame);
+    render(self, &combinedGame->authoritative);
 
     refresh();
 }

@@ -93,12 +93,23 @@ static void exampleClientAddInput(ExampleClient* client, ExampleGamepad* gamepad
     }
 }
 
-int main(void)
+int main(int argc, char* argv[])
 {
     g_clog.log = clog_console;
     g_clog.level = CLOG_TYPE_VERBOSE;
 
     CLOG_INFO("Minimal Example Starts!")
+
+    bool shouldHost = argc > 1 && tc_str_equal(argv[1], "host");
+    ExampleHost host;
+
+    if (shouldHost) {
+        CLOG_INFO("hosting")
+    } else {
+        CLOG_INFO("remote only")
+    }
+
+
 
     ImprintDefaultSetup imprintDefaultSetup;
     imprintDefaultSetupInit(&imprintDefaultSetup, 5 * 1024 * 1024);
@@ -121,8 +132,8 @@ int main(void)
     const StepId authoritativeStepId = { 0x8BADF00D };
     gameAppInit(&app.combinedGame, authoritativeStepId, gameAppClog);
 
-    exampleGameInit(&app.combinedGame.authoritativeGame);
-    exampleGameInit(&app.combinedGame.predictedGame);
+    exampleGameInit(&app.combinedGame.authoritative.game);
+    exampleGameInit(&app.combinedGame.predicted.game);
 
     NimbleServerCallbackObjectVtbl serverCallbackKlass = {
         .authoritativeStateSerializeFn = gameAppAuthoritativeSerialize,
@@ -131,8 +142,10 @@ int main(void)
     NimbleServerCallbackObject serverCallbackObject
         = { .vtbl = &serverCallbackKlass, .self = &app.combinedGame };
 
-    exampleHostInit(&app.host, serverCallbackObject, app.combinedGame.authoritativeStepId,
-        applicationVersion, allocator, allocatorWithFree);
+    if (shouldHost) {
+        exampleHostInit(&host, serverCallbackObject, app.combinedGame.authoritative.stepId,
+            applicationVersion, allocator, allocatorWithFree);
+    }
 
     RectifyCallbackObjectVtbl callbackKlass = {
         .preAuthoritativeTicksFn = gameAppPreAuthoritativeTicks,
@@ -161,11 +174,13 @@ int main(void)
 
 #if defined USE_RENDER
         exampleRenderUpdate(
-            &render, &app.combinedGame.authoritativeGame, &app.combinedGame.predictedGame);
+            &render, &app.combinedGame);
 #endif
         exampleClientAddInput(&app.client, &gamepad);
         exampleClientUpdate(&app.client);
-        exampleHostUpdate(&app.host);
+        if (shouldHost) {
+            exampleHostUpdate(&host);
+        }
         exampleSleepMs(16);
     }
 
