@@ -32,6 +32,7 @@ typedef struct ExamplePlayerInput {
         ExamplePlayerInGameInput inGameInput;
         ExamplePlayerSelectTeam selectTeam;
     } input;
+    uint8_t participantId;
 } ExamplePlayerInput;
 
 #endif

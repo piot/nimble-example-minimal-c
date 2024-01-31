@@ -45,27 +45,31 @@ void gameAppPreAuthoritativeTicks(void* _self)
 static void gameAppTick(
     ExampleGameAndStepId* gameAndTickId, const TransmuteInput* _input, Clog* log)
 {
-    ExamplePlayerInput input;
+    ExamplePlayerInput examplePlayerInputs[EXAMPLE_GAME_MAX_PLAYERS];
 #if !defined CLOG_LOG_ENABLED
     (void)log;
 #endif
 
-    const TransmuteParticipantInput* firstPlayer = &_input->participantInputs[0];
-    switch (firstPlayer->inputType) {
-    case TransmuteParticipantInputTypeNoInputInTime:
-        CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
-        input.inputType = ExamplePlayerInputTypeForced;
-        break;
-    case TransmuteParticipantInputTypeWaitingForReconnect:
-        CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
-        input.inputType = ExamplePlayerInputTypeWaitingForReconnect;
-        break;
-    case TransmuteParticipantInputTypeNormal:
-        input = *(const ExamplePlayerInput*)firstPlayer->input;
-        input.inputType = ExamplePlayerInputTypeInGame;
+    for (size_t i = 0; i < _input->participantCount; ++i) {
+        const TransmuteParticipantInput* participantInput = &_input->participantInputs[i];
+        ExamplePlayerInput* examplePlayerInput = &examplePlayerInputs[i];
+        *examplePlayerInput = *(const ExamplePlayerInput*)participantInput->input;
+
+        switch (participantInput->inputType) {
+        case TransmuteParticipantInputTypeNoInputInTime:
+            CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
+            examplePlayerInput->inputType = ExamplePlayerInputTypeForced;
+            break;
+        case TransmuteParticipantInputTypeWaitingForReconnect:
+            CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
+            examplePlayerInput->inputType = ExamplePlayerInputTypeWaitingForReconnect;
+            break;
+        case TransmuteParticipantInputTypeNormal:
+            break;
+        }
     }
 
-    exampleSimulationTick(&gameAndTickId->game, &input);
+    exampleSimulationTick(&gameAndTickId->game, examplePlayerInputs, _input->participantCount);
     gameAndTickId->stepId++;
 }
 
@@ -80,7 +84,8 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
 void gameAppCopyFromAuthoritativeToPrediction(void* _self, StepId tickId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_C_INFO(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId, self->authoritative.stepId)
+    CLOG_C_INFO(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId,
+        self->authoritative.stepId)
     (void)tickId;
     CLOG_ASSERT(tickId == self->authoritative.stepId, "authoritative tick ID is wrong")
     self->predicted = self->authoritative;

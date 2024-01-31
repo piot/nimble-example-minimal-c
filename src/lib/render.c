@@ -54,34 +54,48 @@ static void drawGameArea(ExampleRender* self)
     mvvline(upper, right, '*', height);
 }
 
-static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
+static void renderSnake(ExampleRender* self, ExampleSnake* snake)
 {
-    ExampleGame* game = &gameAndStepId->game;
-    drawGameArea(self);
-    attron(COLOR_PAIR(1));
-
     RenderPosition renderPos;
-
-    ExampleSnake* snake = &game->snake;
-
     convertPosition(self, snake->x[0], snake->y[0], &renderPos);
     mvprintw(renderPos.y, renderPos.x, "O");
     for (int i = 1; i < snake->length; i++) {
         convertPosition(self, snake->x[i], snake->y[i], &renderPos);
         mvprintw(renderPos.y, renderPos.x, "o");
     }
+}
 
-    attroff(COLOR_PAIR(1));
+static void renderFood(ExampleRender* self, const ExampleFood* food)
+{
     attron(COLOR_PAIR(2));
-    convertPosition(self, game->food.x, game->food.y, &renderPos);
+    RenderPosition renderPos;
+    convertPosition(self, food->x, food->y, &renderPos);
     mvprintw(renderPos.y, renderPos.x, "@");
     attroff(COLOR_PAIR(2));
+}
 
+static void renderHud(ExampleRender* self, StepId stepId)
+{
     RenderPosition tickIdPos;
-
     convertPosition(self, 0, 40, &tickIdPos);
+    mvprintw(tickIdPos.y, tickIdPos.x, "%04X", stepId);
+}
 
-    mvprintw(tickIdPos.y, tickIdPos.x, "%04X", gameAndStepId->stepId);
+static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
+{
+    ExampleGame* game = &gameAndStepId->game;
+    drawGameArea(self);
+
+    attron(COLOR_PAIR(1));
+    for (size_t i = 0; i < game->snakeCount; ++i) {
+        ExampleSnake* snake = &game->snakes[i];
+        renderSnake(self, snake);
+    }
+    attroff(COLOR_PAIR(1));
+
+    renderFood(self, &game->food);
+
+    renderHud(self, gameAndStepId->stepId);
 }
 
 void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame)

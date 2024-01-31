@@ -6,9 +6,8 @@
 
 void exampleGameInit(ExampleGame* self)
 {
-    self->snake.x[0] = 2;
-    self->snake.y[0] = 2;
-    self->snake.length = 1;
+    self->playerCount = 0;
+    self->snakeCount = 0;
 
     self->food.x = 4;
     self->food.y = 4;
@@ -16,3 +15,4 @@ void exampleGameInit(ExampleGame* self)
     self->gameIsOver = false;
     self->ticksBetweenMoves = 10;
 }
+

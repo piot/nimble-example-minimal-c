@@ -8,6 +8,6 @@
 struct ExampleGame;
 struct ExamplePlayerInput;
 
-void exampleSimulationTick(struct ExampleGame* game, const ExamplePlayerInput* input);
+void exampleSimulationTick(struct ExampleGame* game, const ExamplePlayerInput* input, size_t playerCount);
 
 #endif

@@ -11,6 +11,8 @@
 
 #define NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH (20)
 
+#define EXAMPLE_ILLEGAL_INDEX (0xff)
+
 typedef enum ExampleDirection {
     ExampleDirectionUp,
     ExampleDirectionRight,
@@ -30,8 +32,17 @@ typedef struct ExampleFood {
     int y;
 } ExampleFood;
 
+#define EXAMPLE_GAME_MAX_PLAYERS (4)
+
+typedef struct ExamplePlayer {
+    uint8_t snakeIndex;
+} ExamplePlayer;
+
 typedef struct ExampleGame {
-    ExampleSnake snake;
+    ExampleSnake snakes[EXAMPLE_GAME_MAX_PLAYERS];
+    uint8_t snakeCount;
+    ExamplePlayer players[EXAMPLE_GAME_MAX_PLAYERS];
+    uint8_t playerCount;
     ExampleFood food;
     uint32_t pseudoRandom;
     bool gameIsOver;
