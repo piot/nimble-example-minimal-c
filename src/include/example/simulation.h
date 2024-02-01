@@ -7,7 +7,14 @@
 
 struct ExampleGame;
 struct ExamplePlayerInput;
+struct Clog;
 
-void exampleSimulationTick(struct ExampleGame* game, const ExamplePlayerInput* input, size_t playerCount);
+typedef struct ExamplePlayerInputWithParticipantInfo {
+    uint8_t participantId;
+    ExamplePlayerInput playerInput;
+} ExamplePlayerInputWithParticipantInfo;
+
+void exampleSimulationTick(struct ExampleGame* game,
+    const ExamplePlayerInputWithParticipantInfo* input, size_t playerCount, Clog* log);
 
 #endif

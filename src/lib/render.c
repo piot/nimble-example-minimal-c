@@ -87,8 +87,8 @@ static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
     drawGameArea(self);
 
     attron(COLOR_PAIR(1));
-    for (size_t i = 0; i < game->snakeCount; ++i) {
-        ExampleSnake* snake = &game->snakes[i];
+    for (size_t i = 0; i < game->snakes.snakeCount; ++i) {
+        ExampleSnake* snake = &game->snakes.snakes[i];
         renderSnake(self, snake);
     }
     attroff(COLOR_PAIR(1));

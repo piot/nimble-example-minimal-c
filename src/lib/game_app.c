@@ -45,31 +45,39 @@ void gameAppPreAuthoritativeTicks(void* _self)
 static void gameAppTick(
     ExampleGameAndStepId* gameAndTickId, const TransmuteInput* _input, Clog* log)
 {
-    ExamplePlayerInput examplePlayerInputs[EXAMPLE_GAME_MAX_PLAYERS];
+    ExamplePlayerInputWithParticipantInfo
+        examplePlayerInputsWithParticipantInfos[EXAMPLE_GAME_MAX_PLAYERS];
 #if !defined CLOG_LOG_ENABLED
     (void)log;
 #endif
 
     for (size_t i = 0; i < _input->participantCount; ++i) {
         const TransmuteParticipantInput* participantInput = &_input->participantInputs[i];
-        ExamplePlayerInput* examplePlayerInput = &examplePlayerInputs[i];
-        *examplePlayerInput = *(const ExamplePlayerInput*)participantInput->input;
+        ExamplePlayerInputWithParticipantInfo* examplePlayerInputWithParticipantInfo
+            = &examplePlayerInputsWithParticipantInfos[i];
+
+        examplePlayerInputWithParticipantInfo->playerInput
+            = *(const ExamplePlayerInput*)participantInput->input;
+        examplePlayerInputWithParticipantInfo->participantId = participantInput->participantId;
 
         switch (participantInput->inputType) {
         case TransmuteParticipantInputTypeNoInputInTime:
             CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
-            examplePlayerInput->inputType = ExamplePlayerInputTypeForced;
+            examplePlayerInputWithParticipantInfo->playerInput.inputType
+                = ExamplePlayerInputTypeForced;
             break;
         case TransmuteParticipantInputTypeWaitingForReconnect:
             CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
-            examplePlayerInput->inputType = ExamplePlayerInputTypeWaitingForReconnect;
+            examplePlayerInputWithParticipantInfo->playerInput.inputType
+                = ExamplePlayerInputTypeWaitingForReconnect;
             break;
         case TransmuteParticipantInputTypeNormal:
             break;
         }
     }
 
-    exampleSimulationTick(&gameAndTickId->game, examplePlayerInputs, _input->participantCount);
+    exampleSimulationTick(&gameAndTickId->game, examplePlayerInputsWithParticipantInfos,
+        _input->participantCount, log);
     gameAndTickId->stepId++;
 }
 

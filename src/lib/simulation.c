@@ -59,12 +59,12 @@ static uint32_t pseudoRandomNext(uint32_t* seed)
 
 static uint8_t spawnAvatar(ExampleGame* self)
 {
-    uint8_t snakeIndex = self->snakeCount;
-    ExampleSnake* snake = &self->snakes[snakeIndex];
+    uint8_t snakeIndex = self->snakes.snakeCount;
+    ExampleSnake* snake = &self->snakes.snakes[snakeIndex];
     snake->x[0] = 2;
     snake->y[0] = 2;
     snake->length = 1;
-    self->snakeCount++;
+    self->snakes.snakeCount++;
     return snakeIndex;
 }
 
@@ -83,9 +83,13 @@ static uint8_t spawnPlayer(ExampleGame* self)
 
 static void handleInGameInput(ExampleGame* self, const ExamplePlayerInput* playerInput)
 {
-    ExamplePlayer* player = &self->players[playerInput->participantId];
-    CLOG_ASSERT(player->snakeIndex != EXAMPLE_ILLEGAL_INDEX, "illegal snake index");
-    ExampleSnake* snake = &self->snakes[player->snakeIndex];
+    ExamplePlayer* player = &self->players.players[playerInput->participantId];
+    if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
+        CLOG_NOTICE("player tried to play without an avatar, ignoring");
+        return;
+    }
+    //CLOG_ASSERT(player->snakeIndex != EXAMPLE_ILLEGAL_INDEX, "illegal snake index");
+    ExampleSnake* snake = &self->snakes.snakes[player->snakeIndex];
     snakeSetDirectionFromInput(snake, &playerInput->input.inGameInput);
 }
 
@@ -101,7 +105,7 @@ static void handleInput(ExampleGame* self, const ExamplePlayerInput* playerInput
     CLOG_DEBUG("handleInput %02x", playerInput->participantId)
     switch (playerInput->inputType) {
     case ExamplePlayerInputTypeSelectTeam: {
-        ExamplePlayer* player = &self->players[playerInput->participantId];
+        ExamplePlayer* player = &self->players.players[playerInput->participantId];
         spawnAvatarForPlayer(self, player);
     } break;
     case ExamplePlayerInputTypeInGame: {
@@ -146,14 +150,121 @@ static void simulateSnake(ExampleGame* game, ExampleSnake* snake)
 
 static void simulateSnakes(ExampleGame* game)
 {
-    for (size_t i = 0; i < game->snakeCount; ++i) {
-        ExampleSnake* snake = &game->snakes[i];
+    for (size_t i = 0; i < game->snakes.snakeCount; ++i) {
+        ExampleSnake* snake = &game->snakes.snakes[i];
         simulateSnake(game, snake);
     }
 }
 
-void exampleSimulationTick(
-    ExampleGame* game, const ExamplePlayerInput* _input, const size_t inputCount)
+static ExamplePlayer* spawnPlayer(ExamplePlayers* players, uint8_t participantId)
+{
+    size_t playerIndex = players->playerCount++;
+    ExamplePlayer* assignedPlayer = &players->players[playerIndex];
+    assignedPlayer->playerIndex = (uint8_t)playerIndex;
+    assignedPlayer->assignedToParticipantIndex = participantId;
+    assignedPlayer->snakeIndex = EXAMPLE_ILLEGAL_INDEX;
+    // assignedPlayer->preferredTeamId = NL_TEAM_UNDEFINED;
+
+    return assignedPlayer;
+}
+
+static ExamplePlayer* participantJoined(
+    ExamplePlayers* players, ExampleParticipant* participant, Clog* log)
+{
+    (void)log;
+
+    ExamplePlayer* player = spawnPlayer(players, participant->participantId);
+    CLOG_C_INFO(log,
+        "participant has joined. player count is %hhu. created player %d for participant %d",
+        players->playerCount, player->playerIndex, participant->participantId)
+
+    participant->playerIndex = player->playerIndex;
+    participant->isUsed = true;
+
+    return player;
+}
+
+static void removePlayer(
+    ExampleParticipant* participants, ExamplePlayers* self, size_t indexToRemove)
+{
+    self->players[indexToRemove] = self->players[--self->playerCount];
+    participants[self->players[indexToRemove].assignedToParticipantIndex].playerIndex
+        = (uint8_t)indexToRemove;
+}
+
+static void despawnAvatar(ExamplePlayers* players, ExampleSnakes* avatars, size_t indexToRemove)
+{
+    CLOG_ASSERT(indexToRemove < avatars->snakeCount, "avatar index is corrupt")
+    ExampleSnake* avatarToRemove = &avatars->snakes[indexToRemove];
+    if (avatarToRemove->controlledByPlayerIndex != 0xff) {
+        players->players[avatarToRemove->controlledByPlayerIndex].snakeIndex
+            = EXAMPLE_ILLEGAL_INDEX;
+    }
+
+    avatars->snakes[indexToRemove] = avatars->snakes[--avatars->snakeCount];
+}
+
+static void participantLeft(ExamplePlayers* players, ExampleSnakes* avatars,
+    ExampleParticipant* participants, ExampleParticipant* participant, Clog* log)
+{
+    (void)log;
+    ExamplePlayer* assignedPlayer = &players->players[participant->playerIndex];
+    int assignedAvatarIndex = assignedPlayer->snakeIndex;
+    if (assignedAvatarIndex != EXAMPLE_ILLEGAL_INDEX) {
+        despawnAvatar(players, avatars, (size_t)assignedAvatarIndex);
+    }
+
+    removePlayer(participants, players, participant->playerIndex);
+
+    CLOG_C_INFO(log, "someone has left releasing player %hhu previously assigned to participant %d",
+        participant->playerIndex, participant->participantId)
+
+    participant->isUsed = false;
+}
+
+static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithParticipantInfo* inputs,
+    size_t inputCount, Clog* log)
+{
+    if (inputCount != self->lastParticipantLookupCount) {
+        CLOG_C_INFO(log,
+            "a participant has either been added or removed, count is different. was %hhu and is "
+            "now %zu",
+            self->lastParticipantLookupCount, inputCount)
+    }
+
+    for (size_t i = 0; i < EXAMPLE_GAME_MAX_PARTICIPANTS; ++i) {
+        self->participantLookup[i].internalMarked = false;
+    }
+
+    for (size_t i = 0; i < inputCount; ++i) {
+        ExampleParticipant* participant = &self->participantLookup[inputs[i].participantId];
+        if (!participant->isUsed) {
+            participant->isUsed = true;
+            participant->participantId = inputs[i].participantId;
+            ExamplePlayer* player = participantJoined(&self->players, participant, log);
+            (void)player;
+            // gameRulesForJoiningPlayer(self, player);
+        }
+        if (participant->playerIndex != 0xff) {
+            self->players.players[participant->playerIndex].playerInput = inputs[i].playerInput;
+        }
+        participant->internalMarked = true;
+    }
+
+    for (size_t i = 0; i < EXAMPLE_GAME_MAX_PARTICIPANTS; ++i) {
+        ExampleParticipant* participant = &self->participantLookup[i];
+        if (participant->isUsed && !participant->internalMarked) {
+            // An active participants that is no longer in the provided inputs must be removed
+            participantLeft(
+                &self->players, &self->snakes, self->participantLookup, participant, log);
+        }
+    }
+
+    self->lastParticipantLookupCount = (uint8_t)inputCount;
+}
+
+void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithParticipantInfo* _input,
+    const size_t inputCount, Clog* log)
 {
     if (game->ticksBetweenMoves != 0) {
         game->ticksBetweenMoves--;
@@ -166,10 +277,24 @@ void exampleSimulationTick(
         return;
     }
 
+    checkInputDiff(game, _input, inputCount, log);
+
     for (size_t i = 0; i < inputCount; ++i) {
-        const ExamplePlayerInput* playerInput = &_input[i];
-        handleInput(game, playerInput);
+        const ExamplePlayerInputWithParticipantInfo* playerInput = &_input[i];
+        handleInput(game, &playerInput->playerInput);
     }
 
     simulateSnakes(game);
+}
+
+const ExamplePlayer* exampleGameFindSimulationPlayerFromParticipantId(
+    const ExampleGame* self, uint8_t participantId)
+{
+    for (size_t i = 0; i < self->players.playerCount; ++i) {
+        const ExamplePlayer* simulationPlayer = &self->players.players[i];
+        if (simulationPlayer->assignedToParticipantIndex == participantId) {
+            return simulationPlayer;
+        }
+    }
+    return 0;
 }

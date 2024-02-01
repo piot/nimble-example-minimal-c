@@ -6,13 +6,17 @@
 
 void exampleGameInit(ExampleGame* self)
 {
-    self->playerCount = 0;
-    self->snakeCount = 0;
+    self->players.playerCount = 0;
+    self->snakes.snakeCount = 0;
 
     self->food.x = 4;
     self->food.y = 4;
     self->pseudoRandom = 0;
     self->gameIsOver = false;
     self->ticksBetweenMoves = 10;
+
+    for (size_t i = 0; i < EXAMPLE_GAME_MAX_PARTICIPANTS; ++i) {
+        self->participantLookup[i].isUsed = false;
+    }
 }
 

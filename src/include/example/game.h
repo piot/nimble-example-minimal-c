@@ -5,6 +5,8 @@
 #ifndef NIMBLE_EXAMPLE_MINIMAL_GAME_H
 #define NIMBLE_EXAMPLE_MINIMAL_GAME_H
 
+#include "input.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,6 +27,7 @@ typedef struct ExampleSnake {
     int y[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
     int length;
     ExampleDirection movementDirection;
+    uint8_t controlledByPlayerIndex;
 } ExampleSnake;
 
 typedef struct ExampleFood {
@@ -33,22 +36,49 @@ typedef struct ExampleFood {
 } ExampleFood;
 
 #define EXAMPLE_GAME_MAX_PLAYERS (4)
+#define EXAMPLE_GAME_MAX_AVATARS (4)
 
 typedef struct ExamplePlayer {
     uint8_t snakeIndex;
+    uint8_t assignedToParticipantIndex;
+    uint8_t playerIndex;
+    ExamplePlayerInput playerInput;
 } ExamplePlayer;
 
-typedef struct ExampleGame {
-    ExampleSnake snakes[EXAMPLE_GAME_MAX_PLAYERS];
-    uint8_t snakeCount;
+#define EXAMPLE_GAME_MAX_PARTICIPANTS (16)
+
+typedef struct ExamplePlayers {
     ExamplePlayer players[EXAMPLE_GAME_MAX_PLAYERS];
     uint8_t playerCount;
+} ExamplePlayers;
+
+typedef struct ExampleParticipant {
+    uint8_t participantId;
+    uint8_t playerIndex;
+    bool isUsed;
+    bool internalMarked;
+} ExampleParticipant;
+
+typedef struct ExampleSnakes {
+    ExampleSnake snakes[EXAMPLE_GAME_MAX_AVATARS];
+    uint8_t snakeCount;
+} ExampleSnakes;
+
+typedef struct ExampleGame {
+    ExamplePlayers players;
+    ExampleSnakes snakes;
     ExampleFood food;
     uint32_t pseudoRandom;
     bool gameIsOver;
     uint32_t ticksBetweenMoves;
+
+    uint8_t lastParticipantLookupCount;
+    ExampleParticipant participantLookup[EXAMPLE_GAME_MAX_PARTICIPANTS];
 } ExampleGame;
 
 void exampleGameInit(ExampleGame* self);
+
+const ExamplePlayer* exampleGameFindSimulationPlayerFromParticipantId(
+    const ExampleGame* self, uint8_t participantId);
 
 #endif

@@ -13,7 +13,7 @@
 
 #include <imprint/default_setup.h>
 
- #define USE_RENDER
+// #define USE_RENDER
 
 clog_config g_clog;
 
