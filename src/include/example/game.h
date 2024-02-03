@@ -22,17 +22,26 @@ typedef enum ExampleDirection {
     ExampleDirectionLeft,
 } ExampleDirection;
 
+typedef struct ExamplePosition {
+    int x;
+    int y;
+} ExamplePosition;
+
+typedef struct ExampleGameArea {
+    size_t width;
+    size_t height;
+} ExampleGameArea;
+
 typedef struct ExampleSnake {
-    int x[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
-    int y[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
+    ExamplePosition body[NIMBLE_EXAMPLE_SNAKE_MAX_LENGTH];
     int length;
     ExampleDirection movementDirection;
     uint8_t controlledByPlayerIndex;
+    bool isFrozen;
 } ExampleSnake;
 
 typedef struct ExampleFood {
-    int x;
-    int y;
+    ExamplePosition position;
 } ExampleFood;
 
 #define EXAMPLE_GAME_MAX_PLAYERS (4)
@@ -65,6 +74,7 @@ typedef struct ExampleSnakes {
 } ExampleSnakes;
 
 typedef struct ExampleGame {
+    ExampleGameArea area;
     ExamplePlayers players;
     ExampleSnakes snakes;
     ExampleFood food;

@@ -19,6 +19,6 @@ typedef struct ExampleGamepad {
 
 void exampleGamepadInit(ExampleGamepad* self);
 void exampleGamepadUpdate(ExampleGamepad* self);
-void exampleGamepadRead(ExampleGamepad* self, ExampleGamepadState* state);
+void exampleGamepadRead(const ExampleGamepad* self, ExampleGamepadState* state);
 
 #endif

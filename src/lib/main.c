@@ -13,18 +13,19 @@
 
 #include <imprint/default_setup.h>
 
-// #define USE_RENDER
+#define USE_RENDER
 
 clog_config g_clog;
 
 // TODO: Should not need to define this temp_str
 char g_clog_temp_str[CLOG_TEMP_STR_SIZE];
 
-static ExamplePlayerInput gamepadToPlayerInput(ExampleGamepad* gamepad)
+#define EXAMPLE_GAME_MAX_LOCAL_PLAYERS (1)
+
+static ExamplePlayerInput gamepadToPlayerInput(const ExampleGamepad* gamepad)
 {
     ExampleGamepadState gamepadState;
 
-    exampleGamepadUpdate(gamepad);
     exampleGamepadRead(gamepad, &gamepadState);
     ExamplePlayerInGameInput ingameInput = {
         .horizontalAxis = (int8_t)gamepadState.horizontal,
@@ -40,43 +41,86 @@ static ExamplePlayerInput gamepadToPlayerInput(ExampleGamepad* gamepad)
     return playerInput;
 }
 
-#define NLR_MAX_LOCAL_PLAYERS (1)
-
-static void addPredictedInput(ExampleClient* client, ExampleGamepad* gamepad)
+static ExamplePlayerInput constructPlayerInput(
+    const ExampleGame* authoritative, const ExampleGamepad* gamepad, uint8_t participantId)
 {
-    ExamplePlayerInput inputs[NLR_MAX_LOCAL_PLAYERS];
-    uint8_t participantId[NLR_MAX_LOCAL_PLAYERS];
-    TransmuteParticipantInput participantInputs[2];
+    CLOG_NOTICE("constructing input for participant %02X", participantId)
+    const ExamplePlayer* simulationPlayer
+        = exampleGameFindSimulationPlayerFromParticipantId(authoritative, participantId);
+    if (simulationPlayer == 0 || simulationPlayer->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
+        // We haven't joined yet, keep asking
+        CLOG_NOTICE("we haven't joined yet, asking to join for participant %02X", participantId)
+        ExamplePlayerInput playerInput = {
+            .input.selectTeam.preferredTeamToJoin = 1,
+            .inputType = ExamplePlayerInputTypeSelectTeam,
+        };
+        return playerInput;
+    }
 
+    CLOG_NOTICE(
+        "we are joined, compiling gamepad input to send for participant %02X", participantId)
+    return gamepadToPlayerInput(gamepad);
+}
+
+static void createTransmuteInput(const ExampleClient* client, const ExampleGame* authoritative,
+    const ExampleGamepad* gamepad, TransmuteInput* outputTransmuteInput)
+{
     static const int useLocalPlayerCount = 1;
 
+    static ExamplePlayerInput inputs[EXAMPLE_GAME_MAX_LOCAL_PLAYERS];
+    static TransmuteParticipantInput participantInputs[EXAMPLE_GAME_MAX_LOCAL_PLAYERS];
+
     for (size_t i = 0U; i < useLocalPlayerCount; ++i) {
-        participantId[i] = client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i]
-                               .participantId;
-        inputs[i] = gamepadToPlayerInput(gamepad);
+        uint8_t participantId
+            = client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i]
+                  .participantId;
+        inputs[i] = constructPlayerInput(authoritative, gamepad, participantId);
+
         participantInputs[i].input = &inputs[i];
         participantInputs[i].octetSize = sizeof(inputs[i]);
-        participantInputs[i].participantId = participantId[i];
+        participantInputs[i].participantId = participantId;
         participantInputs[i].inputType = TransmuteParticipantInputTypeNormal;
     }
 
-    TransmuteInput transmuteInput;
-    transmuteInput.participantInputs = participantInputs;
-    transmuteInput.participantCount = useLocalPlayerCount;
+    outputTransmuteInput->participantInputs = participantInputs;
+    outputTransmuteInput->participantCount = useLocalPlayerCount;
+}
 
+static void addGamePredictedInput(
+    ExampleClient* client, const ExampleGame* authoritative, ExampleGamepad* gamepad)
+{
+    CLOG_C_NOTICE(&client->log, "creating predicted input")
+    TransmuteInput transmuteInput;
+    createTransmuteInput(client, authoritative, gamepad, &transmuteInput);
     nimbleEngineClientAddPredictedInput(&client->nimbleEngineClient, &transmuteInput);
 }
 
-static void exampleClientAddInput(ExampleClient* client, ExampleGamepad* gamepad)
+static void exampleClientAddInput(
+    ExampleClient* client, ExampleGame* authoritative, ExampleGamepad* gamepad)
 {
     transportStackSingleUpdate(&client->singleTransport);
+    exampleGamepadUpdate(gamepad);
 
     if (transportStackSingleIsConnected(&client->singleTransport)) {
         nimbleEngineClientUpdate(&client->nimbleEngineClient);
         if (client->nimbleEngineClient.phase == NimbleEngineClientPhaseSynced
             && client->nimbleEngineClient.nimbleClient.client.localParticipantCount > 0
             && nimbleEngineClientMustAddPredictedInput(&client->nimbleEngineClient)) {
-            addPredictedInput(client, gamepad);
+
+            /*
+            const uint8_t localGamepadDevice = 0;
+            uint8_t participantId;
+            int error
+                = nimbleClientFindParticipantId(&client->nimbleEngineClient.nimbleClient.client,
+                    localGamepadDevice, &participantId);
+            if (error < 0) {
+                CLOG_C_NOTICE(&client->log, "can not find localIndex participantid")
+                return;
+            }
+            */
+
+            addGamePredictedInput(client, authoritative, gamepad);
+
             /*
             if (app->frontend.phase == NlFrontendPhaseJoining) {
                 app->frontend.phase = NlFrontendPhaseInGame;
@@ -108,8 +152,6 @@ int main(int argc, char* argv[])
     } else {
         CLOG_INFO("remote only")
     }
-
-
 
     ImprintDefaultSetup imprintDefaultSetup;
     imprintDefaultSetupInit(&imprintDefaultSetup, 5 * 1024 * 1024);
@@ -161,7 +203,13 @@ int main(int argc, char* argv[])
         .self = &app.combinedGame,
     };
 
-    exampleClientInit( &app.client, callbackObject, applicationVersion, allocator, allocatorWithFree);
+    Clog clientAppClog = {
+        .constantPrefix = "exampleClient",
+        .config = &g_clog,
+    };
+
+    exampleClientInit(&app.client, callbackObject, applicationVersion, allocator, allocatorWithFree,
+        clientAppClog);
 
 #if defined USE_RENDER
     ExampleRender render;
@@ -173,10 +221,9 @@ int main(int argc, char* argv[])
     while (1) {
 
 #if defined USE_RENDER
-        exampleRenderUpdate(
-            &render, &app.combinedGame);
+        exampleRenderUpdate(&render, &app.combinedGame);
 #endif
-        exampleClientAddInput(&app.client, &gamepad);
+        exampleClientAddInput(&app.client, &app.combinedGame.authoritative.game, &gamepad);
         exampleClientUpdate(&app.client);
         if (shouldHost) {
             exampleHostUpdate(&host);
@@ -188,5 +235,5 @@ int main(int argc, char* argv[])
     //exampleRenderClose(&render);
 #endif
 
-//    return 0;
+    //    return 0;
 }

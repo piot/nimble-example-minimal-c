@@ -7,46 +7,57 @@
 #include <example/input.h>
 #include <example/simulation.h>
 
-#define WIDTH 40
-#define HEIGHT 30
-
-static void snakeMoveWithFront(ExampleSnake* snake)
+static void moveBodyOneStepIntoFront(ExampleSnake* snake)
 {
     for (int i = snake->length - 1; i > 0; i--) {
-        snake->x[i] = snake->x[i - 1];
-        snake->y[i] = snake->y[i - 1];
+        snake->body[i].x = snake->body[i - 1].x;
+        snake->body[i].y = snake->body[i - 1].y;
     }
 }
 
-static void snakeSetDirectionFromInput(ExampleSnake* snake, const ExamplePlayerInGameInput* pad)
+static ExampleDirection directionFromInput(
+    const ExamplePlayerInGameInput* pad, ExampleDirection defaultDirection)
 {
     if (pad->horizontalAxis < 0) {
-        snake->movementDirection = ExampleDirectionLeft;
-    } else if (pad->horizontalAxis > 0) {
-        snake->movementDirection = ExampleDirectionRight;
-    } else if (pad->verticalAxis < 0) {
-        snake->movementDirection = ExampleDirectionDown;
-    } else if (pad->verticalAxis > 0) {
-        snake->movementDirection = ExampleDirectionUp;
+        return ExampleDirectionLeft;
     }
+    if (pad->horizontalAxis > 0) {
+        return ExampleDirectionRight;
+    }
+    if (pad->verticalAxis < 0) {
+        return ExampleDirectionDown;
+    }
+    if (pad->verticalAxis > 0) {
+        return ExampleDirectionUp;
+    }
+
+    return defaultDirection;
 }
 
-static void snakeMoveFrontUsingDirection(ExampleSnake* snake)
+static bool positionsEqual(ExamplePosition a, ExamplePosition b)
 {
-    switch (snake->movementDirection) {
+    return a.x == b.x && a.y == b.y;
+}
+
+static ExamplePosition movePositionInDirection(
+    ExamplePosition pos, ExampleDirection movementDirection)
+{
+    switch (movementDirection) {
     case ExampleDirectionDown:
-        snake->y[0]--;
+        pos.y--;
         break;
     case ExampleDirectionUp:
-        snake->y[0]++;
+        pos.y++;
         break;
     case ExampleDirectionLeft:
-        snake->x[0]--;
+        pos.x--;
         break;
     case ExampleDirectionRight:
-        snake->x[0]++;
+        pos.x++;
         break;
     }
+
+    return pos;
 }
 
 static uint32_t pseudoRandomNext(uint32_t* seed)
@@ -61,8 +72,8 @@ static uint8_t spawnAvatar(ExampleGame* self)
 {
     uint8_t snakeIndex = self->snakes.snakeCount;
     ExampleSnake* snake = &self->snakes.snakes[snakeIndex];
-    snake->x[0] = 2;
-    snake->y[0] = 2;
+    snake->body[0].x = 2;
+    snake->body[0].y = 2;
     snake->length = 1;
     self->snakes.snakeCount++;
     return snakeIndex;
@@ -90,62 +101,97 @@ static void handleInGameInput(ExampleGame* self, const ExamplePlayerInput* playe
     }
     //CLOG_ASSERT(player->snakeIndex != EXAMPLE_ILLEGAL_INDEX, "illegal snake index");
     ExampleSnake* snake = &self->snakes.snakes[player->snakeIndex];
-    snakeSetDirectionFromInput(snake, &playerInput->input.inGameInput);
+    snake->movementDirection
+        = directionFromInput(&playerInput->input.inGameInput, snake->movementDirection);
+    CLOG_NOTICE("movement direction is %02X", snake->movementDirection)
 }
 
 static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
 {
-    if (player->snakeIndex != EXAMPLE_ILLEGAL_INDEX) {
+    if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
+        CLOG_NOTICE("player %02X did not have a snacke, spawning it now", player->playerIndex)
         player->snakeIndex = spawnAvatar(self);
+    } else {
+        CLOG_NOTICE("player %02X already have snake, do not spawn", player->playerIndex)
     }
 }
 
-static void handleInput(ExampleGame* self, const ExamplePlayerInput* playerInput)
+static void handleInput(
+    ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
 {
-    CLOG_DEBUG("handleInput %02x", playerInput->participantId)
+    CLOG_DEBUG("handleInput %02x type: %02X", playerInput->participantId, playerInput->inputType)
     switch (playerInput->inputType) {
     case ExamplePlayerInputTypeSelectTeam: {
-        ExamplePlayer* player = &self->players.players[playerInput->participantId];
         spawnAvatarForPlayer(self, player);
     } break;
     case ExamplePlayerInputTypeInGame: {
         handleInGameInput(self, playerInput);
-    }
-    case ExamplePlayerInputTypeForced:
-    case ExamplePlayerInputTypeWaitingForReconnect:
-    case ExamplePlayerInputTypeNone:
+    } break;
+    case ExamplePlayerInputTypeEmpty:
         break;
     }
 }
 
-static void simulateSnake(ExampleGame* game, ExampleSnake* snake)
+static void spawnNewFood(ExampleGame* game)
 {
-    // Check if eaten food
-    if (snake->x[0] == game->food.x && snake->y[0] == game->food.y) {
+    uint32_t randomX = pseudoRandomNext(&game->pseudoRandom);
+    uint32_t randomY = pseudoRandomNext(&game->pseudoRandom);
+    game->food.position.x = (int)(randomX % (game->area.width - 2) + 1);
+    game->food.position.y = (int)(randomY % (game->area.height - 2) + 1);
+}
+
+static void checkIfSnakeAteFood(ExampleGame* game, ExampleSnake* snake)
+{
+    if (positionsEqual(snake->body[0], game->food.position)) {
         snake->length++;
-        uint32_t randomX = pseudoRandomNext(&game->pseudoRandom);
-        uint32_t randomY = pseudoRandomNext(&game->pseudoRandom);
-        game->food.x = randomX % (WIDTH - 2) + 1;
-        game->food.y = randomY % (HEIGHT - 2) + 1;
+        spawnNewFood(game);
     }
+}
 
-    snakeMoveWithFront(snake);
-    snakeMoveFrontUsingDirection(snake);
-
+static bool checkIfCollidedWithSelf(ExampleSnake* snake, ExamplePosition checkPosition)
+{
     for (int i = 1; i < snake->length; i++) {
-        if (snake->x[i] == snake->x[0] && snake->y[i] == snake->y[0]) {
-            game->gameIsOver = true;
-            CLOG_INFO("ate yourself")
-            return;
+        if (positionsEqual(snake->body[i], checkPosition)) {
+            return true;
         }
     }
 
-    if (snake->x[0] <= 0 || snake->x[0] >= WIDTH - 1 || snake->y[0] <= 0
-        || snake->y[0] >= HEIGHT - 1) {
-        game->gameIsOver = true;
-        CLOG_INFO("collided with wall %d, %d", snake->x[0], snake->y[0])
+    return false;
+}
+
+static bool checkIfPositionIsOnWall(ExampleGameArea area, ExamplePosition position)
+{
+    if (position.x <= 0 || position.x >= (int)(area.width - 1) || position.y <= 0
+        || position.y >= (int)(area.height - 1)) {
+        return true;
+    }
+
+    return false;
+}
+
+static void simulateSnake(ExampleGame* game, ExampleSnake* snake)
+{
+    checkIfSnakeAteFood(game, snake);
+
+    ExamplePosition nextPosition
+        = movePositionInDirection(snake->body[0], snake->movementDirection);
+
+    bool didCollide = checkIfCollidedWithSelf(snake, nextPosition);
+    if (didCollide) {
+        CLOG_NOTICE("collided with self")
+        snake->isFrozen = true;
         return;
     }
+
+    bool didCollideWithWall = checkIfPositionIsOnWall(game->area, nextPosition);
+    if (didCollideWithWall) {
+        CLOG_NOTICE("collided with wall")
+        snake->isFrozen = true;
+        return;
+    }
+
+    moveBodyOneStepIntoFront(snake);
+    snake->body[0] = nextPosition;
 }
 
 static void simulateSnakes(ExampleGame* game)
@@ -165,6 +211,7 @@ static ExamplePlayer* spawnPlayer(ExamplePlayers* players, uint8_t participantId
     assignedPlayer->snakeIndex = EXAMPLE_ILLEGAL_INDEX;
     // assignedPlayer->preferredTeamId = NL_TEAM_UNDEFINED;
 
+    CLOG_NOTICE("spawning player: player index %02X", assignedPlayer->playerIndex)
     return assignedPlayer;
 }
 
@@ -227,7 +274,8 @@ static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithPartic
 {
     if (inputCount != self->lastParticipantLookupCount) {
         CLOG_C_INFO(log,
-            "a participant has either been added or removed, count is different. was %hhu and is "
+            "a participant has either been added or removed, count is different. was %hhu and "
+            "is "
             "now %zu",
             self->lastParticipantLookupCount, inputCount)
     }
@@ -280,8 +328,12 @@ void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithPartic
     checkInputDiff(game, _input, inputCount, log);
 
     for (size_t i = 0; i < inputCount; ++i) {
-        const ExamplePlayerInputWithParticipantInfo* playerInput = &_input[i];
-        handleInput(game, &playerInput->playerInput);
+        const ExamplePlayerInputWithParticipantInfo* combinedPlayerInput = &_input[i];
+        ExampleParticipant* participant
+            = &game->participantLookup[combinedPlayerInput->participantId];
+        ExamplePlayer* player = &game->players.players[participant->playerIndex];
+
+        handleInput(game, player, &combinedPlayerInput->playerInput);
     }
 
     simulateSnakes(game);

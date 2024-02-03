@@ -64,8 +64,9 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
 
 void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
     NimbleSerializeVersion version, ImprintAllocator* allocator,
-    ImprintAllocatorWithFree* allocatorWithFree)
+    ImprintAllocatorWithFree* allocatorWithFree, Clog log)
 {
+    self->log = log;
     setupSingleTransport(&self->singleTransport, allocator, allocatorWithFree);
     initNimbleEngineClient(&self->nimbleEngineClient, callbackObject,
         self->singleTransport.singleTransport, version, allocator, allocatorWithFree);

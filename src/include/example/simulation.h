@@ -4,14 +4,15 @@
  *--------------------------------------------------------------------------------------------------------*/
 #ifndef NIMBLE_EXAMPLE_MINIMAL_SIMULATION_H
 #define NIMBLE_EXAMPLE_MINIMAL_SIMULATION_H
+#include "input.h"
 
 struct ExampleGame;
-struct ExamplePlayerInput;
 struct Clog;
 
 typedef struct ExamplePlayerInputWithParticipantInfo {
     uint8_t participantId;
     ExamplePlayerInput playerInput;
+    ExamplePlayerEmptyInputType nimbleInputType;
 } ExamplePlayerInputWithParticipantInfo;
 
 void exampleSimulationTick(struct ExampleGame* game,

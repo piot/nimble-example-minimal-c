@@ -19,12 +19,16 @@ typedef struct ExamplePlayerSelectTeam {
 } ExamplePlayerSelectTeam;
 
 typedef enum ExamplePlayerInputType {
-    ExamplePlayerInputTypeForced,
-    ExamplePlayerInputTypeWaitingForReconnect,
-    ExamplePlayerInputTypeNone,
+    ExamplePlayerInputTypeEmpty,
     ExamplePlayerInputTypeInGame,
     ExamplePlayerInputTypeSelectTeam,
 } ExamplePlayerInputType;
+
+typedef enum ExamplePlayerNimbleInputType {
+    ExamplePlayerEmptyInputTypeNormal,
+    ExamplePlayerEmptyInputTypeWaitingForReconnect,
+    ExamplePlayerEmptyInputTypeForced,
+} ExamplePlayerEmptyInputType;
 
 typedef struct ExamplePlayerInput {
     ExamplePlayerInputType inputType;

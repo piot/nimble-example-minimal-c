@@ -33,10 +33,10 @@ typedef struct RenderPosition {
     int y;
 } RenderPosition;
 
-static void convertPosition(ExampleRender* self, int x, int y, RenderPosition* outRenderPosition)
+static void convertPosition(ExampleRender* self, ExamplePosition simulationPosition, RenderPosition* outRenderPosition)
 {
-    outRenderPosition->x = self->xOffset + x;
-    outRenderPosition->y = self->numberOfRows - 1 - y;
+    outRenderPosition->x = self->xOffset + simulationPosition.x;
+    outRenderPosition->y = self->numberOfRows - 1 - simulationPosition.y;
 }
 
 static void drawGameArea(ExampleRender* self)
@@ -57,10 +57,10 @@ static void drawGameArea(ExampleRender* self)
 static void renderSnake(ExampleRender* self, ExampleSnake* snake)
 {
     RenderPosition renderPos;
-    convertPosition(self, snake->x[0], snake->y[0], &renderPos);
+    convertPosition(self, snake->body[0], &renderPos);
     mvprintw(renderPos.y, renderPos.x, "O");
     for (int i = 1; i < snake->length; i++) {
-        convertPosition(self, snake->x[i], snake->y[i], &renderPos);
+        convertPosition(self, snake->body[i], &renderPos);
         mvprintw(renderPos.y, renderPos.x, "o");
     }
 }
@@ -69,7 +69,7 @@ static void renderFood(ExampleRender* self, const ExampleFood* food)
 {
     attron(COLOR_PAIR(2));
     RenderPosition renderPos;
-    convertPosition(self, food->x, food->y, &renderPos);
+    convertPosition(self, food->position, &renderPos);
     mvprintw(renderPos.y, renderPos.x, "@");
     attroff(COLOR_PAIR(2));
 }
@@ -77,7 +77,8 @@ static void renderFood(ExampleRender* self, const ExampleFood* food)
 static void renderHud(ExampleRender* self, StepId stepId)
 {
     RenderPosition tickIdPos;
-    convertPosition(self, 0, 40, &tickIdPos);
+    ExamplePosition tickIdLogicalPos = {0, 40};
+    convertPosition(self, tickIdLogicalPos, &tickIdPos);
     mvprintw(tickIdPos.y, tickIdPos.x, "%04X", stepId);
 }
 
