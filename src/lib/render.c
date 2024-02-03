@@ -17,6 +17,14 @@ void exampleRenderInit(ExampleRender* self)
     start_color();
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(5, COLOR_CYAN, COLOR_BLACK);
+    init_pair(6, COLOR_YELLOW, COLOR_BLACK);
+
+
+    init_pair(8, COLOR_YELLOW, COLOR_BLACK);
+
     self->numberOfRows = getmaxy(stdscr);
     self->numberOfColumns = getmaxx(stdscr);
 }
@@ -33,7 +41,8 @@ typedef struct RenderPosition {
     int y;
 } RenderPosition;
 
-static void convertPosition(ExampleRender* self, ExamplePosition simulationPosition, RenderPosition* outRenderPosition)
+static void convertPosition(
+    ExampleRender* self, ExamplePosition simulationPosition, RenderPosition* outRenderPosition)
 {
     outRenderPosition->x = self->xOffset + simulationPosition.x;
     outRenderPosition->y = self->numberOfRows - 1 - simulationPosition.y;
@@ -67,17 +76,17 @@ static void renderSnake(ExampleRender* self, ExampleSnake* snake)
 
 static void renderFood(ExampleRender* self, const ExampleFood* food)
 {
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(8) | A_BOLD);
     RenderPosition renderPos;
     convertPosition(self, food->position, &renderPos);
     mvprintw(renderPos.y, renderPos.x, "@");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(8) | A_BOLD);
 }
 
 static void renderHud(ExampleRender* self, StepId stepId)
 {
     RenderPosition tickIdPos;
-    ExamplePosition tickIdLogicalPos = {0, 40};
+    ExamplePosition tickIdLogicalPos = { 0, 40 };
     convertPosition(self, tickIdLogicalPos, &tickIdPos);
     mvprintw(tickIdPos.y, tickIdPos.x, "%04X", stepId);
 }
@@ -87,12 +96,16 @@ static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
     ExampleGame* game = &gameAndStepId->game;
     drawGameArea(self);
 
-    attron(COLOR_PAIR(1));
     for (size_t i = 0; i < game->snakes.snakeCount; ++i) {
         ExampleSnake* snake = &game->snakes.snakes[i];
+        int colorIndex = game->players.players[snake->controlledByPlayerIndex].playerIndex + 1;
+
+        attron(COLOR_PAIR(colorIndex));
+
         renderSnake(self, snake);
+
+        attroff(COLOR_PAIR(colorIndex));
     }
-    attroff(COLOR_PAIR(1));
 
     renderFood(self, &game->food);
 

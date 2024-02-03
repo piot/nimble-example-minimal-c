@@ -7,7 +7,6 @@ add_executable(nimble-minimal-example
         game_app.c
         gamepad.c
         host.c
-        input.c
         main.c
         render.c
         simulation.c

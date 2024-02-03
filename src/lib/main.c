@@ -30,7 +30,7 @@ static ExamplePlayerInput gamepadToPlayerInput(const ExampleGamepad* gamepad)
     ExamplePlayerInGameInput ingameInput = {
         .horizontalAxis = (int8_t)gamepadState.horizontal,
         .verticalAxis = (int8_t)gamepadState.vertical,
-        .wantsToJump = gamepadState.buttons != 0,
+        .abilityButton = gamepadState.buttons != 0,
     };
 
     ExamplePlayerInput playerInput = {
@@ -107,28 +107,7 @@ static void exampleClientAddInput(
             && client->nimbleEngineClient.nimbleClient.client.localParticipantCount > 0
             && nimbleEngineClientMustAddPredictedInput(&client->nimbleEngineClient)) {
 
-            /*
-            const uint8_t localGamepadDevice = 0;
-            uint8_t participantId;
-            int error
-                = nimbleClientFindParticipantId(&client->nimbleEngineClient.nimbleClient.client,
-                    localGamepadDevice, &participantId);
-            if (error < 0) {
-                CLOG_C_NOTICE(&client->log, "can not find localIndex participantid")
-                return;
-            }
-            */
-
             addGamePredictedInput(client, authoritative, gamepad);
-
-            /*
-            if (app->frontend.phase == NlFrontendPhaseJoining) {
-                app->frontend.phase = NlFrontendPhaseInGame;
-                client->savedSecret
-                    = client->nimbleEngineClient.nimbleClient.client.participantsConnectionSecret;
-                client->hasSavedSecret = true;
-            }
-            */
         }
 
     } else {

@@ -7,7 +7,6 @@
 
 #include <nimble-server/server.h>
 #include <transport-stack/multi.h>
-#include <transport-stack/single.h>
 
 typedef struct ExampleHost {
     NimbleServer nimbleServer;

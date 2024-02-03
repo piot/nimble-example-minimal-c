@@ -7,7 +7,6 @@
 
 #include <example/client.h>
 #include <example/game_app.h>
-#include <example/host.h>
 
 typedef struct ExampleApp {
     ExampleClient client;

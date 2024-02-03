@@ -64,33 +64,21 @@ static uint32_t pseudoRandomNext(uint32_t* seed)
 {
     const uint32_t c = 1013904223;
     const uint32_t a = 1664525;
-    *seed = (*seed * a + c);
+    *seed = *seed * a + c;
     return *seed;
 }
 
-static uint8_t spawnAvatar(ExampleGame* self)
+static uint8_t spawnAvatar(ExampleGame* self, uint8_t playerIndex)
 {
     uint8_t snakeIndex = self->snakes.snakeCount;
     ExampleSnake* snake = &self->snakes.snakes[snakeIndex];
     snake->body[0].x = 2;
     snake->body[0].y = 2;
     snake->length = 1;
+    snake->controlledByPlayerIndex = playerIndex;
     self->snakes.snakeCount++;
     return snakeIndex;
 }
-
-/*
-static uint8_t spawnPlayer(ExampleGame* self)
-{
-    (void)self;
-    uint8_t playerIndex = self->playerCount;
-    ExamplePlayer* player = &self->players[self->playerCount];
-
-    self->playerCount++;
-
-    return playerIndex;
-}
-*/
 
 static void handleInGameInput(
     ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
@@ -110,7 +98,7 @@ static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
 {
     if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
         CLOG_NOTICE("player %02X did not have a snacke, spawning it now", player->playerIndex)
-        player->snakeIndex = spawnAvatar(self);
+        player->snakeIndex = spawnAvatar(self, player->playerIndex);
     } else {
         CLOG_NOTICE("player %02X already have snake, do not spawn", player->playerIndex)
     }
@@ -119,7 +107,7 @@ static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
 static void handleInput(
     ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
 {
-    CLOG_DEBUG("handleInput %02x type: %02X", playerInput->participantId, playerInput->inputType)
+    CLOG_DEBUG("handleInput type: %02X", playerInput->inputType)
     switch (playerInput->inputType) {
     case ExamplePlayerInputTypeSelectTeam: {
         spawnAvatarForPlayer(self, player);

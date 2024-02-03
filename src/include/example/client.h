@@ -5,25 +5,24 @@
 #ifndef NIMBLE_EXAMPLE_MINIMAL_CLIENT_H
 #define NIMBLE_EXAMPLE_MINIMAL_CLIENT_H
 
-#include <transport-stack/single.h>
-#include <nimble-engine-client/client.h>
 #include <clog/clog.h>
+#include <nimble-engine-client/client.h>
 #include <stdbool.h>
+#include <transport-stack/single.h>
 
 struct ImprintAllocator;
 struct ImprintAllocatorWithFree;
 
 typedef struct ExampleClient {
     TransportStackSingle singleTransport;
-    //    ImprintAllocator* allocator;
-    //  ImprintAllocatorWithFree* allocatorWithFree;
     NimbleEngineClient nimbleEngineClient;
     Clog log;
     bool hasSavedSecret;
     NimbleSerializeParticipantConnectionSecret savedSecret;
 } ExampleClient;
 
-void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject, NimbleSerializeVersion version, struct ImprintAllocator* allocator,
+void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
+    NimbleSerializeVersion version, struct ImprintAllocator* allocator,
     struct ImprintAllocatorWithFree* allocatorWithFree, Clog log);
 void exampleClientUpdate(ExampleClient* self);
 

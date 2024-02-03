@@ -9,6 +9,14 @@
 struct ExampleGame;
 struct Clog;
 
+/// Copy from nimble what kind of input that is used (to avoid dependency towards Nimble)
+typedef enum ExamplePlayerNimbleInputType {
+  ExamplePlayerEmptyInputTypeNormal,
+  ExamplePlayerEmptyInputTypeWaitingForReconnect,
+  ExamplePlayerEmptyInputTypeForced,
+} ExamplePlayerEmptyInputType;
+
+/// Expanded input from transmute participant input
 typedef struct ExamplePlayerInputWithParticipantInfo {
     uint8_t participantId;
     ExamplePlayerInput playerInput;

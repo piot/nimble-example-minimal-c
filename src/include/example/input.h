@@ -8,35 +8,32 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct ExamplePlayerInGameInput {
-    int8_t horizontalAxis;
-    int8_t verticalAxis;
-    bool wantsToJump;
-} ExamplePlayerInGameInput;
-
+/// First step to send for a joining participant
 typedef struct ExamplePlayerSelectTeam {
     uint8_t preferredTeamToJoin;
 } ExamplePlayerSelectTeam;
 
+/// Used to control the avatar (snake)
+typedef struct ExamplePlayerInGameInput {
+    int8_t horizontalAxis;
+    int8_t verticalAxis;
+    bool abilityButton;
+} ExamplePlayerInGameInput;
+
+/// Defined which part of the ExamplePlayerInput input union to use
 typedef enum ExamplePlayerInputType {
     ExamplePlayerInputTypeEmpty,
     ExamplePlayerInputTypeInGame,
     ExamplePlayerInputTypeSelectTeam,
 } ExamplePlayerInputType;
 
-typedef enum ExamplePlayerNimbleInputType {
-    ExamplePlayerEmptyInputTypeNormal,
-    ExamplePlayerEmptyInputTypeWaitingForReconnect,
-    ExamplePlayerEmptyInputTypeForced,
-} ExamplePlayerEmptyInputType;
-
+/// Example Step
 typedef struct ExamplePlayerInput {
     ExamplePlayerInputType inputType;
     union {
         ExamplePlayerInGameInput inGameInput;
         ExamplePlayerSelectTeam selectTeam;
     } input;
-    uint8_t participantId;
 } ExamplePlayerInput;
 
 #endif
