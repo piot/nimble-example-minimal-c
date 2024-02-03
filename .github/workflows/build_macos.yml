@@ -1,0 +1,34 @@
+name: build mac os
+on: [push]
+jobs:
+  build:
+    name: Build MacOS
+    runs-on: macos-12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.14.2
+        with:
+          cmake-version: '3.28.x'
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: deps fetch dependencies
+        run: go run github.com/piot/deps/src/deps@main fetch
+
+      - name: create cmake cache
+        run: cmake -DCMAKE_BUILD_TYPE=Debug .
+
+      - name: build
+        run: cmake --build . --clean-first
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nimble Example MacOS Executable
+          path: |
+            src/lib/nimble-minimal-example
