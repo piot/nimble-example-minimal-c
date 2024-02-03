@@ -24,9 +24,8 @@ jobs:
           version: '16.0.4'
           env: true
 
-          - name: deps fetch dependencies
-        run:
-          go run github.com/piot/deps/src/deps@main fetch
+      - name: deps fetch dependencies
+        run: go run github.com/piot/deps/src/deps@main fetch
 
       - name: create cmake cache
         run: cmake -DCMAKE_BUILD_TYPE=Debug .
