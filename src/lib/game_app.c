@@ -56,21 +56,28 @@ static void gameAppTick(
         ExamplePlayerInputWithParticipantInfo* examplePlayerInputWithParticipantInfo
             = &examplePlayerInputsWithParticipantInfos[i];
 
-        examplePlayerInputWithParticipantInfo->playerInput
-            = *(const ExamplePlayerInput*)participantInput->input;
         examplePlayerInputWithParticipantInfo->participantId = participantInput->participantId;
 
         switch (participantInput->inputType) {
         case TransmuteParticipantInputTypeNoInputInTime:
             CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
-            examplePlayerInputWithParticipantInfo->nimbleInputType = ExamplePlayerEmptyInputTypeForced;
+            examplePlayerInputWithParticipantInfo->playerInput.inputType
+                = ExamplePlayerInputTypeEmpty;
+            examplePlayerInputWithParticipantInfo->nimbleInputType
+                = ExamplePlayerEmptyInputTypeForced;
             break;
         case TransmuteParticipantInputTypeWaitingForReconnect:
             CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
-            examplePlayerInputWithParticipantInfo->nimbleInputType = ExamplePlayerEmptyInputTypeWaitingForReconnect;
+            examplePlayerInputWithParticipantInfo->playerInput.inputType
+                = ExamplePlayerInputTypeEmpty;
+            examplePlayerInputWithParticipantInfo->nimbleInputType
+                = ExamplePlayerEmptyInputTypeWaitingForReconnect;
             break;
         case TransmuteParticipantInputTypeNormal:
-            examplePlayerInputWithParticipantInfo->nimbleInputType = ExamplePlayerEmptyInputTypeNormal;
+            examplePlayerInputWithParticipantInfo->playerInput
+                = *(const ExamplePlayerInput*)participantInput->input;
+            examplePlayerInputWithParticipantInfo->nimbleInputType
+                = ExamplePlayerEmptyInputTypeNormal;
             break;
         }
     }
