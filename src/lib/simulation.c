@@ -92,9 +92,9 @@ static uint8_t spawnPlayer(ExampleGame* self)
 }
 */
 
-static void handleInGameInput(ExampleGame* self, const ExamplePlayerInput* playerInput)
+static void handleInGameInput(
+    ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
 {
-    ExamplePlayer* player = &self->players.players[playerInput->participantId];
     if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
         CLOG_NOTICE("player tried to play without an avatar, ignoring");
         return;
@@ -125,7 +125,7 @@ static void handleInput(
         spawnAvatarForPlayer(self, player);
     } break;
     case ExamplePlayerInputTypeInGame: {
-        handleInGameInput(self, playerInput);
+        handleInGameInput(self, player, playerInput);
     } break;
     case ExamplePlayerInputTypeEmpty:
         break;
@@ -211,7 +211,8 @@ static ExamplePlayer* spawnPlayer(ExamplePlayers* players, uint8_t participantId
     assignedPlayer->snakeIndex = EXAMPLE_ILLEGAL_INDEX;
     // assignedPlayer->preferredTeamId = NL_TEAM_UNDEFINED;
 
-    CLOG_NOTICE("spawning player: player index %02X for participant %02X", assignedPlayer->playerIndex, participantId)
+    CLOG_NOTICE("spawning player: player index %02X for participant %02X",
+        assignedPlayer->playerIndex, participantId)
     return assignedPlayer;
 }
 
@@ -289,7 +290,8 @@ static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithPartic
         if (!participant->isUsed) {
             participant->isUsed = true;
             participant->participantId = inputs[i].participantId;
-            CLOG_NOTICE("we noticed a new participant with id %02X, lets spawn a player for it", inputs[i].participantId);
+            CLOG_NOTICE("we noticed a new participant with id %02X, lets spawn a player for it",
+                inputs[i].participantId);
             ExamplePlayer* player = participantJoined(&self->players, participant, log);
             (void)player;
             // gameRulesForJoiningPlayer(self, player);
