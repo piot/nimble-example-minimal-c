@@ -10,3 +10,7 @@ version = "*"
 [[dependencies]]
 name = "piot/transport-stack"
 version = "*"
+
+[[dependencies]]
+name = "piot/mash-c"
+version = "*"

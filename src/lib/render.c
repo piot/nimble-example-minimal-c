@@ -83,15 +83,20 @@ static void renderFood(ExampleRender* self, const ExampleFood* food)
     attroff(COLOR_PAIR(8) | A_BOLD);
 }
 
-static void renderHud(ExampleRender* self, StepId stepId)
+static void renderHud(ExampleRender* self, StepId stepId, uint32_t hash)
 {
     RenderPosition tickIdPos;
     ExamplePosition tickIdLogicalPos = { 0, 40 };
     convertPosition(self, tickIdLogicalPos, &tickIdPos);
     mvprintw(tickIdPos.y, tickIdPos.x, "%04X", stepId);
+
+    ExamplePosition hashLogical = { 0, 37 };
+    RenderPosition hashRenderPos;
+    convertPosition(self, hashLogical, &hashRenderPos);
+    mvprintw(hashRenderPos.y, hashRenderPos.x, "%04X", hash);
 }
 
-static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
+static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId, uint32_t hash)
 {
     ExampleGame* game = &gameAndStepId->game;
     drawGameArea(self);
@@ -109,19 +114,19 @@ static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId)
 
     renderFood(self, &game->food);
 
-    renderHud(self, gameAndStepId->stepId);
+    renderHud(self, gameAndStepId->stepId, hash);
 }
 
-void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame)
+void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint32_t hash)
 {
     (void)self;
 
     clear();
 
     self->xOffset = 0;
-    render(self, &combinedGame->predicted);
+    render(self, &combinedGame->predicted, 0);
     self->xOffset = 40;
-    render(self, &combinedGame->authoritative);
+    render(self, &combinedGame->authoritative, hash);
 
     refresh();
 }

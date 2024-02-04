@@ -12,6 +12,7 @@
 #include <example/sleep.h>
 
 #include <imprint/default_setup.h>
+#include <mash/murmur.h>
 
 #define USE_RENDER
 
@@ -41,13 +42,20 @@ static ExamplePlayerInput gamepadToPlayerInput(const ExampleGamepad* gamepad)
     return playerInput;
 }
 
-static ExamplePlayerInput constructPlayerInput(
-    const ExampleGame* authoritative, const ExampleGamepad* gamepad, uint8_t participantId)
+static ExamplePlayerInput constructPlayerInput(const ExampleGame* authoritative,
+    const ExampleGamepad* gamepad, uint8_t participantId, bool autoJoin)
 {
     CLOG_NOTICE("constructing input for participant %02X", participantId)
     const ExamplePlayer* simulationPlayer
         = exampleGameFindSimulationPlayerFromParticipantId(authoritative, participantId);
     if (simulationPlayer == 0 || simulationPlayer->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
+
+        if (!autoJoin) {
+            ExamplePlayerInput playerInput = {
+                .inputType = ExamplePlayerInputTypeEmpty,
+            };
+            return playerInput;
+        }
         // We haven't joined yet, keep asking
         CLOG_NOTICE("we haven't joined yet, asking to join for participant %02X", participantId)
         ExamplePlayerInput playerInput = {
@@ -74,7 +82,8 @@ static void createTransmuteInput(const ExampleClient* client, const ExampleGame*
         uint8_t participantId
             = client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i]
                   .participantId;
-        inputs[i] = constructPlayerInput(authoritative, gamepad, participantId);
+        inputs[i]
+            = constructPlayerInput(authoritative, gamepad, participantId, client->autoJoinEnabled);
 
         participantInputs[i].input = &inputs[i];
         participantInputs[i].octetSize = sizeof(inputs[i]);
@@ -190,6 +199,8 @@ int main(int argc, char* argv[])
     exampleClientInit(&app.client, callbackObject, applicationVersion, allocator, allocatorWithFree,
         clientAppClog);
 
+    app.client.autoJoinEnabled = true; // shouldHost;
+
 #if defined USE_RENDER
     ExampleRender render;
     exampleRenderInit(&render);
@@ -198,13 +209,15 @@ int main(int argc, char* argv[])
     exampleGamepadInit(&gamepad);
 
     while (1) {
-
 #if defined USE_RENDER
-        exampleRenderUpdate(&render, &app.combinedGame);
+        uint32_t hash = mashMurmurHash3(
+            (const uint8_t*)&app.combinedGame.authoritative.game, sizeof(ExampleGame));
+        exampleRenderUpdate(&render, &app.combinedGame, hash);
 #endif
         exampleClientAddInput(&app.client, &app.combinedGame.authoritative.game, &gamepad);
         exampleClientUpdate(&app.client);
         if (shouldHost) {
+            host.nimbleServer.game.debugIsFrozen = gamepad.internalState.debugPauseIsDown;
             exampleHostUpdate(&host);
         }
         exampleSleepMs(16);

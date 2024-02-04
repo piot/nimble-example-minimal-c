@@ -19,6 +19,7 @@ typedef struct ExampleClient {
     Clog log;
     bool hasSavedSecret;
     NimbleSerializeParticipantConnectionSecret savedSecret;
+    bool autoJoinEnabled;
 } ExampleClient;
 
 void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,

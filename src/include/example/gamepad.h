@@ -6,11 +6,13 @@
 #define NIMBLE_EXAMPLE_MINIMAL_GAMEPAD_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct ExampleGamepadState {
     int horizontal;
     int vertical;
     uint8_t buttons;
+    bool debugPauseIsDown;
 } ExampleGamepadState;
 
 typedef struct ExampleGamepad {

@@ -12,7 +12,7 @@ typedef struct ExampleRender {
 } ExampleRender;
 
 void exampleRenderInit(ExampleRender* self);
-void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame);
+void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint32_t hash);
 void exampleRenderClose(ExampleRender* self);
 
 #endif

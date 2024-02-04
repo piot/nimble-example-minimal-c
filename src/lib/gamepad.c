@@ -10,6 +10,7 @@ void exampleGamepadInit(ExampleGamepad* self)
     self->internalState.horizontal = 0;
     self->internalState.vertical = 0;
     self->internalState.buttons = 0;
+    self->internalState.debugPauseIsDown = false;
 }
 
 void exampleGamepadUpdate(ExampleGamepad* self)
@@ -34,6 +35,9 @@ void exampleGamepadUpdate(ExampleGamepad* self)
     case KEY_DOWN:
         state->vertical = -1;
         state->horizontal = 0;
+        break;
+    case 'p':
+        state->debugPauseIsDown = !state->debugPauseIsDown;
         break;
     }
 }
