@@ -39,7 +39,8 @@ uint64_t gameAppAuthoritativeHash(void* _self)
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_INFO(&self->log, "authoritativeHash")
 
-    return mashMurmurHash3((const uint8_t*)&self->authoritative.game, sizeof(self->authoritative.game));
+    return mashMurmurHash3(
+        (const uint8_t*)&self->authoritative.game, sizeof(self->authoritative.game));
 }
 
 void gameAppPreAuthoritativeTicks(void* _self)
@@ -107,7 +108,11 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input, StepId 
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
+#if defined CLOG_ENABLED
     CLOG_ASSERT(stepId == self->authoritative.stepId, "predicted tick ID is wrong")
+#else
+    (void)stepId;
+#endif
 
     gameAppTick(&self->authoritative, _input, &self->log);
 }
@@ -126,7 +131,11 @@ void gameAppPredictionTick(void* _self, const TransmuteInput* _input, StepId ste
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "PredictionTick()")
+    #if defined CLOG_ENABLED
     CLOG_ASSERT(stepId == self->predicted.stepId, "predicted tick ID is wrong")
+    #else
+    (void) stepId;
+    #endif
     gameAppTick(&self->predicted, _input, &self->log);
 }
 

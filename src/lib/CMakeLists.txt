@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.16.3)
 
 add_executable(
-  nimble-minimal-example
+  nimble-snake
   client.c
   game.c
   game_app.c
@@ -14,12 +14,12 @@ add_executable(
   sleep.c)
 
 include(Tornado.cmake)
-set_tornado(nimble-minimal-example)
+set_tornado(nimble-snake)
 
-target_include_directories(nimble-minimal-example PRIVATE ../include)
+target_include_directories(nimble-snake PRIVATE ../include)
 
-target_link_libraries(nimble-minimal-example PUBLIC nimble transport-stack mash)
+target_link_libraries(nimble-snake PUBLIC nimble transport-stack mash)
 
 find_package(Curses REQUIRED)
-target_include_directories(nimble-minimal-example PRIVATE ${CURSES_INCLUDE_DIR})
-target_link_libraries(nimble-minimal-example PUBLIC ${CURSES_LIBRARIES})
+target_include_directories(nimble-snake PRIVATE ${CURSES_INCLUDE_DIR})
+target_link_libraries(nimble-snake PUBLIC ${CURSES_LIBRARIES})

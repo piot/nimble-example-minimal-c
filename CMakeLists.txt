@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(nimble-minimal-example C)
+project(nimble-snake C)
 enable_testing()
 
 add_subdirectory(deps/piot/assent-c/src/lib)
