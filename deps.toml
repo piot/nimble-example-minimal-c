@@ -1,6 +1,6 @@
 depsversion = "0.0.0"
 
-name = "piot/nimble-minimal-example-c"
+name = "piot/nimble-snake"
 version = "0.0.0"
 
 [[dependencies]]
@@ -11,6 +11,3 @@ version = "*"
 name = "piot/transport-stack"
 version = "*"
 
-[[dependencies]]
-name = "piot/mash-c"
-version = "*"
