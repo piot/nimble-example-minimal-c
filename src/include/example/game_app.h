@@ -26,10 +26,11 @@ void gameAppInit(ExampleGameApp* self, StepId stepId, Clog log);
 
 void gameAppAuthoritativeSerialize(void* _self, NimbleServerSerializedGameState* state);
 void gameAppAuthoritativeDeserialize(void* self, const TransmuteState* state, StepId stepId);
+uint64_t gameAppAuthoritativeHash(void* _self);
 void gameAppPreAuthoritativeTicks(void* self);
-void gameAppAuthoritativeTick(void* self, const TransmuteInput* input);
+void gameAppAuthoritativeTick(void* self, const TransmuteInput* input, StepId stepId);
 void gameAppCopyFromAuthoritativeToPrediction(void* self, StepId tickId);
-void gameAppPredictionTick(void* self, const TransmuteInput* input);
+void gameAppPredictionTick(void* self, const TransmuteInput* input, StepId stepId);
 void gameAppPredictionPostPredictionTicks(void* self);
 
 #endif

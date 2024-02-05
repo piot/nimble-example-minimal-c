@@ -6,6 +6,7 @@
 #include <example/app.h>
 #include <example/input.h>
 #include <example/simulation.h>
+#include <mash/murmur.h>
 
 void gameAppInit(ExampleGameApp* self, StepId authoritativeStepId, Clog log)
 {
@@ -21,6 +22,7 @@ void gameAppAuthoritativeSerialize(void* _self, NimbleServerSerializedGameState*
     state->gameState = (const uint8_t*)&self->authoritative.game;
     state->stepId = self->authoritative.stepId;
     state->gameStateOctetCount = sizeof(self->authoritative.game);
+    state->hash = mashMurmurHash3(state->gameState, state->gameStateOctetCount);
 }
 
 void gameAppAuthoritativeDeserialize(void* _self, const TransmuteState* state, StepId stepId)
@@ -30,6 +32,14 @@ void gameAppAuthoritativeDeserialize(void* _self, const TransmuteState* state, S
 
     self->authoritative.game = *((const ExampleGame*)state->state);
     self->authoritative.stepId = stepId;
+}
+
+uint64_t gameAppAuthoritativeHash(void* _self)
+{
+    ExampleGameApp* self = (ExampleGameApp*)_self;
+    CLOG_C_INFO(&self->log, "authoritativeHash")
+
+    return mashMurmurHash3((const uint8_t*)&self->authoritative.game, sizeof(self->authoritative.game));
 }
 
 void gameAppPreAuthoritativeTicks(void* _self)
@@ -61,6 +71,8 @@ static void gameAppTick(
         switch (participantInput->inputType) {
         case TransmuteParticipantInputTypeNoInputInTime:
             CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
+            CLOG_ASSERT(participantInput->input == 0, "input should be null on NoInputInTime")
+            tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
             examplePlayerInputWithParticipantInfo->playerInput.inputType
                 = ExamplePlayerInputTypeEmpty;
             examplePlayerInputWithParticipantInfo->nimbleInputType
@@ -68,12 +80,16 @@ static void gameAppTick(
             break;
         case TransmuteParticipantInputTypeWaitingForReconnect:
             CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
+            CLOG_ASSERT(participantInput->input == 0, "input should be null on WaitingForReconnect")
+            tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
             examplePlayerInputWithParticipantInfo->playerInput.inputType
                 = ExamplePlayerInputTypeEmpty;
             examplePlayerInputWithParticipantInfo->nimbleInputType
                 = ExamplePlayerEmptyInputTypeWaitingForReconnect;
             break;
         case TransmuteParticipantInputTypeNormal:
+            CLOG_ASSERT(participantInput->input != 0,
+                "input can not be null on TransmuteParticipantInputTypeNormal")
             examplePlayerInputWithParticipantInfo->playerInput
                 = *(const ExamplePlayerInput*)participantInput->input;
             examplePlayerInputWithParticipantInfo->nimbleInputType
@@ -87,10 +103,11 @@ static void gameAppTick(
     gameAndTickId->stepId++;
 }
 
-void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input)
+void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input, StepId stepId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "authoritativeTick()")
+    CLOG_ASSERT(stepId == self->authoritative.stepId, "predicted tick ID is wrong")
 
     gameAppTick(&self->authoritative, _input, &self->log);
 }
@@ -105,10 +122,11 @@ void gameAppCopyFromAuthoritativeToPrediction(void* _self, StepId tickId)
     self->predicted = self->authoritative;
 }
 
-void gameAppPredictionTick(void* _self, const TransmuteInput* _input)
+void gameAppPredictionTick(void* _self, const TransmuteInput* _input, StepId stepId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "PredictionTick()")
+    CLOG_ASSERT(stepId == self->predicted.stepId, "predicted tick ID is wrong")
     gameAppTick(&self->predicted, _input, &self->log);
 }
 

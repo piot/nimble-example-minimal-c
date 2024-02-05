@@ -181,6 +181,7 @@ int main(int argc, char* argv[])
         .preAuthoritativeTicksFn = gameAppPreAuthoritativeTicks,
         .authoritativeTickFn = gameAppAuthoritativeTick,
         .authoritativeDeserializeFn = gameAppAuthoritativeDeserialize,
+        .authoritativeHashFn = gameAppAuthoritativeHash,
         .copyFromAuthoritativeToPredictionFn = gameAppCopyFromAuthoritativeToPrediction,
         .predictionTickFn = gameAppPredictionTick,
         .postPredictionTicksFn = gameAppPredictionPostPredictionTicks,
@@ -211,7 +212,7 @@ int main(int argc, char* argv[])
     while (1) {
 #if defined USE_RENDER
         uint32_t hash = mashMurmurHash3(
-            (const uint8_t*)&app.combinedGame.authoritative.game, sizeof(ExampleGame));
+            (const uint8_t*)&app.combinedGame.authoritative.game, sizeof(app.combinedGame.authoritative.game));
         exampleRenderUpdate(&render, &app.combinedGame, hash);
 #endif
         exampleClientAddInput(&app.client, &app.combinedGame.authoritative.game, &gamepad);
