@@ -15,4 +15,4 @@ CMakeCache.txt
 default.profraw
 CTestTestfile.cmake
 cmake_install.cmake
-src/lib/nimble-minimal-example
+src/lib/nimble-snake
