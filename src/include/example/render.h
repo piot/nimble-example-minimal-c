@@ -9,9 +9,12 @@ typedef struct ExampleRender {
     int numberOfRows;
     int numberOfColumns;
     int xOffset;
+    int yOffset;
+    int xOffsetReset;
+    ExampleGameArea gameArea;
 } ExampleRender;
 
-void exampleRenderInit(ExampleRender* self);
+void exampleRenderInit(ExampleRender* self, ExampleGameArea gameArea);
 void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint32_t hash);
 void exampleRenderClose(ExampleRender* self);
 

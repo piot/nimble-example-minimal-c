@@ -6,7 +6,7 @@
 #include <example/render.h>
 #include <ncurses.h>
 
-void exampleRenderInit(ExampleRender* self)
+void exampleRenderInit(ExampleRender* self, ExampleGameArea gameArea)
 {
     initscr();
     cbreak();
@@ -15,6 +15,7 @@ void exampleRenderInit(ExampleRender* self)
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
     start_color();
+    attr_off(A_BOLD, NULL);
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_BLUE, COLOR_BLACK);
@@ -22,11 +23,13 @@ void exampleRenderInit(ExampleRender* self)
     init_pair(5, COLOR_CYAN, COLOR_BLACK);
     init_pair(6, COLOR_YELLOW, COLOR_BLACK);
 
-
     init_pair(8, COLOR_YELLOW, COLOR_BLACK);
 
     self->numberOfRows = getmaxy(stdscr);
     self->numberOfColumns = getmaxx(stdscr);
+    self->gameArea = gameArea;
+    self->xOffsetReset = (int)gameArea.width + 5;
+    self->yOffset = 1;
 }
 
 void exampleRenderClose(ExampleRender* self)
@@ -45,22 +48,21 @@ static void convertPosition(
     ExampleRender* self, ExamplePosition simulationPosition, RenderPosition* outRenderPosition)
 {
     outRenderPosition->x = self->xOffset + simulationPosition.x;
-    outRenderPosition->y = self->numberOfRows - 1 - simulationPosition.y;
+    outRenderPosition->y = self->numberOfRows - 1 - (self->yOffset + simulationPosition.y);
 }
 
-static void drawGameArea(ExampleRender* self)
+static void drawGameArea(ExampleRender* self, ExampleGameArea gameArea)
 {
-    int width = 40;
-    int height = 30;
+    int upper = self->numberOfRows - 1 - ((int)gameArea.height + 1);
     int lower = self->numberOfRows - 1;
-    int left = self->xOffset;
-    int upper = self->numberOfRows - 1 - height;
-    int right = self->xOffset + width;
 
-    mvhline(upper, left, '*', width);
-    mvhline(lower, left, '*', width);
-    mvvline(upper, left, '*', height);
-    mvvline(upper, right, '*', height);
+    int left = self->xOffset - 1;
+    int right = self->xOffset - 1 + (int)gameArea.width + 2 - 1;
+
+    mvhline(upper, left, '*', gameArea.width + 2);
+    mvhline(lower, left, '*', gameArea.width + 2);
+    mvvline(upper, left, '*', gameArea.height + 2);
+    mvvline(upper, right, '*', gameArea.height + 2);
 }
 
 static void renderSnake(ExampleRender* self, ExampleSnake* snake)
@@ -85,12 +87,15 @@ static void renderFood(ExampleRender* self, const ExampleFood* food)
 
 static void renderHud(ExampleRender* self, StepId stepId, uint32_t hash)
 {
+    int y = (int)self->gameArea.height + 1;
     RenderPosition tickIdPos;
-    ExamplePosition tickIdLogicalPos = { 0, 40 };
+    ExamplePosition tickIdLogicalPos = { 0, y };
     convertPosition(self, tickIdLogicalPos, &tickIdPos);
     mvprintw(tickIdPos.y, tickIdPos.x, "%04X", stepId);
 
-    ExamplePosition hashLogical = { 0, 37 };
+    y++;
+
+    ExamplePosition hashLogical = { 0, y };
     RenderPosition hashRenderPos;
     convertPosition(self, hashLogical, &hashRenderPos);
     mvprintw(hashRenderPos.y, hashRenderPos.x, "%04X", hash);
@@ -99,7 +104,7 @@ static void renderHud(ExampleRender* self, StepId stepId, uint32_t hash)
 static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId, uint32_t hash)
 {
     ExampleGame* game = &gameAndStepId->game;
-    drawGameArea(self);
+    drawGameArea(self, game->area);
 
     for (size_t i = 0; i < game->snakes.snakeCount; ++i) {
         ExampleSnake* snake = &game->snakes.snakes[i];
@@ -123,9 +128,9 @@ void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint
 
     clear();
 
-    self->xOffset = 0;
+    self->xOffset = 1;
     render(self, &combinedGame->predicted, 0);
-    self->xOffset = 40;
+    self->xOffset = self->xOffsetReset;
     render(self, &combinedGame->authoritative, hash);
 
     refresh();

@@ -5,8 +5,8 @@
 #include <example/game.h>
 #include <tiny-libc/tiny_libc.h>
 
-#define WIDTH 40
-#define HEIGHT 30
+#define WIDTH 50
+#define HEIGHT 20
 
 void exampleGameInit(ExampleGame* self)
 {

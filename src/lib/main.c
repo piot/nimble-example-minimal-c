@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 
 #if defined USE_RENDER
     ExampleRender render;
-    exampleRenderInit(&render);
+    exampleRenderInit(&render, app.combinedGame.authoritative.game.area);
 #endif
     ExampleGamepad gamepad;
     exampleGamepadInit(&gamepad);

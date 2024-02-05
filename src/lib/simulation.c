@@ -147,14 +147,12 @@ static bool checkIfCollidedWithSelf(ExampleSnake* snake, ExamplePosition checkPo
     return false;
 }
 
-static bool checkIfPositionIsOnWall(ExampleGameArea area, ExamplePosition position)
+static ExamplePosition moduluPositionIfOnWall(ExampleGameArea area, ExamplePosition position)
 {
-    if (position.x <= 0 || position.x >= (int)(area.width - 1) || position.y <= 0
-        || position.y >= (int)(area.height - 1)) {
-        return true;
-    }
+    position.x = tc_modulo(position.x, (int)area.width);
+    position.y = tc_modulo(position.y, (int)area.height);
 
-    return false;
+    return position;
 }
 
 static void simulateSnake(ExampleGame* game, ExampleSnake* snake)
@@ -171,12 +169,7 @@ static void simulateSnake(ExampleGame* game, ExampleSnake* snake)
         return;
     }
 
-    bool didCollideWithWall = checkIfPositionIsOnWall(game->area, nextPosition);
-    if (didCollideWithWall) {
-        CLOG_NOTICE("collided with wall")
-        snake->isFrozen = true;
-        return;
-    }
+    nextPosition = moduluPositionIfOnWall(game->area, nextPosition);
 
     moveBodyOneStepIntoFront(snake);
     snake->body[0] = nextPosition;
@@ -311,7 +304,7 @@ void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithPartic
         return;
     }
 
-    game->ticksBetweenMoves = 3;
+    game->ticksBetweenMoves = 6;
 
     if (game->gameIsOver) {
         return;
