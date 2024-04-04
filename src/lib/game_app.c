@@ -37,7 +37,7 @@ void gameAppAuthoritativeDeserialize(void* _self, const TransmuteState* state, S
 uint64_t gameAppAuthoritativeHash(void* _self)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_C_INFO(&self->log, "authoritativeHash")
+    // CLOG_C_VERBOSE(&self->log, "authoritativeHash")
 
     return mashMurmurHash3(
         (const uint8_t*)&self->authoritative.game, sizeof(self->authoritative.game));
@@ -71,7 +71,7 @@ static void gameAppTick(
 
         switch (participantInput->inputType) {
         case TransmuteParticipantInputTypeNoInputInTime:
-            CLOG_C_NOTICE(log, "authoritativeTick(noInputInTime)")
+            //CLOG_C_VERBOSE(log, "authoritativeTick(noInputInTime)")
             CLOG_ASSERT(participantInput->input == 0, "input should be null on NoInputInTime")
             tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
             examplePlayerInputWithParticipantInfo->playerInput.inputType
@@ -80,7 +80,7 @@ static void gameAppTick(
                 = ExamplePlayerEmptyInputTypeForced;
             break;
         case TransmuteParticipantInputTypeWaitingForReconnect:
-            CLOG_C_NOTICE(log, "authoritativeTick(waitingForReconnect)")
+            //CLOG_C_VERBOSE(log, "authoritativeTick(waitingForReconnect)")
             CLOG_ASSERT(participantInput->input == 0, "input should be null on WaitingForReconnect")
             tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
             examplePlayerInputWithParticipantInfo->playerInput.inputType
@@ -120,8 +120,8 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input, StepId 
 void gameAppCopyFromAuthoritativeToPrediction(void* _self, StepId tickId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-    CLOG_C_INFO(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId,
-        self->authoritative.stepId)
+   // CLOG_C_VERBOSE(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId,
+     //   self->authoritative.stepId)
     (void)tickId;
     CLOG_ASSERT(tickId == self->authoritative.stepId, "authoritative tick ID is wrong")
     self->predicted = self->authoritative;

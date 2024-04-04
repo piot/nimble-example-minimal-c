@@ -45,7 +45,7 @@ static ExamplePlayerInput gamepadToPlayerInput(const ExampleGamepad* gamepad)
 static ExamplePlayerInput constructPlayerInput(const ExampleGame* authoritative,
     const ExampleGamepad* gamepad, uint8_t participantId, bool autoJoin)
 {
-    CLOG_NOTICE("constructing input for participant %02X", participantId)
+    //CLOG_NOTICE("constructing input for participant %02X", participantId)
     const ExamplePlayer* simulationPlayer
         = exampleGameFindSimulationPlayerFromParticipantId(authoritative, participantId);
     if (simulationPlayer == 0 || simulationPlayer->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
@@ -57,7 +57,7 @@ static ExamplePlayerInput constructPlayerInput(const ExampleGame* authoritative,
             return playerInput;
         }
         // We haven't joined yet, keep asking
-        CLOG_NOTICE("we haven't joined yet, asking to join for participant %02X", participantId)
+        CLOG_DEBUG("we haven't joined yet, asking to join for participant %02X", participantId)
         ExamplePlayerInput playerInput = {
             .input.selectTeam.preferredTeamToJoin = 1,
             .inputType = ExamplePlayerInputTypeSelectTeam,
@@ -65,8 +65,8 @@ static ExamplePlayerInput constructPlayerInput(const ExampleGame* authoritative,
         return playerInput;
     }
 
-    CLOG_NOTICE(
-        "we are joined, compiling gamepad input to send for participant %02X", participantId)
+    //CLOG_NOTICE(
+     //   "we are joined, compiling gamepad input to send for participant %02X", participantId)
     return gamepadToPlayerInput(gamepad);
 }
 
@@ -98,7 +98,7 @@ static void createTransmuteInput(const ExampleClient* client, const ExampleGame*
 static void addGamePredictedInput(
     ExampleClient* client, const ExampleGame* authoritative, ExampleGamepad* gamepad)
 {
-    CLOG_C_NOTICE(&client->log, "creating predicted input")
+    //CLOG_C_NOTICE(&client->log, "creating predicted input")
     TransmuteInput transmuteInput;
     createTransmuteInput(client, authoritative, gamepad, &transmuteInput);
     nimbleEngineClientAddPredictedInput(&client->nimbleEngineClient, &transmuteInput);

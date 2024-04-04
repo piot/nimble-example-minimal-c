@@ -91,7 +91,7 @@ static void handleInGameInput(
     ExampleSnake* snake = &self->snakes.snakes[player->snakeIndex];
     snake->movementDirection
         = directionFromInput(&playerInput->input.inGameInput, snake->movementDirection);
-    CLOG_NOTICE("movement direction is %02X", snake->movementDirection)
+    //CLOG_VERBOSE("movement direction is %02X", snake->movementDirection)
 }
 
 static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
@@ -107,7 +107,7 @@ static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
 static void handleInput(
     ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
 {
-    CLOG_DEBUG("handleInput type: %02X", playerInput->inputType)
+    //CLOG_VERBOSE("handleInput type: %02X", playerInput->inputType)
     switch (playerInput->inputType) {
     case ExamplePlayerInputTypeSelectTeam: {
         spawnAvatarForPlayer(self, player);
@@ -271,7 +271,7 @@ static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithPartic
         if (!participant->isUsed) {
             participant->isUsed = true;
             participant->participantId = inputs[i].participantId;
-            CLOG_NOTICE("we noticed a new participant with id %02X, lets spawn a player for it",
+            CLOG_DEBUG("we noticed a new participant with id %02X, lets spawn a player for it",
                 inputs[i].participantId);
             ExamplePlayer* player = participantJoined(&self->players, participant, log);
             (void)player;

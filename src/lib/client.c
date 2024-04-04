@@ -21,7 +21,7 @@ static void initNimbleEngineClient(NimbleEngineClient* self, RectifyCallbackObje
         .maximumSingleParticipantStepOctetCount = sizeof(ExamplePlayerInput),
         .maximumParticipantCount = 8,
         .applicationVersion = applicationVersion,
-        .maxTicksFromAuthoritative = 10U,
+        .maxTicksFromAuthoritative = 20U,
         .rectifyCallbackObject = callbackObject,
         .wantsDebugStream = true };
 
@@ -39,7 +39,7 @@ static void join(ExampleClient* self)
     const NimbleEngineClientGameJoinOptions joinOptions = { .playerCount = useLocalPlayerCount,
         .players[0].localIndex = 99,
         .players[1].localIndex = 42,
-        .useSecret = self->hasSavedSecret,
+        .type = self->hasSavedSecret ? NimbleSerializeJoinGameTypeSecret : NimbleSerializeJoinGameTypeNoSecret,
         .secret = self->savedSecret };
     CLOG_DEBUG("nimble client is trying to join / rejoin server")
 
