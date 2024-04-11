@@ -63,6 +63,10 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
     // with specific rules or game mode or similar
     // Since the whole game is blittable structs with no pointers, we can just cast it to an (uint8_t*)
     nimbleServerReInitWithGame(&self->nimbleServer, authoritativeStepId, monotonicTimeMsNow());
+
+//    NimbleSerializeParticipantId participantIds[] = { 0x02, 0x0a };
+  //  nimbleServerHostMigration(
+    //    &self->nimbleServer, participantIds, sizeof(participantIds) / sizeof(participantIds[0]));
 }
 
 void exampleHostUpdate(ExampleHost* self)

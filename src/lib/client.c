@@ -33,16 +33,25 @@ static void initNimbleEngineClient(NimbleEngineClient* self, RectifyCallbackObje
     CLOG_DEBUG("nimble client is setup with transport")
 }
 
-static void join(ExampleClient* self)
+static void join(ExampleClient* self, bool isServerClient)
 {
     static const int useLocalPlayerCount = 1;
-    const NimbleEngineClientGameJoinOptions joinOptions = { .playerCount = useLocalPlayerCount,
+    NimbleEngineClientGameJoinOptions joinOptions = { .playerCount = useLocalPlayerCount,
         .players[0].localIndex = 99,
         .players[1].localIndex = 42,
         .type = self->hasSavedSecret ? NimbleSerializeJoinGameTypeSecret : NimbleSerializeJoinGameTypeNoSecret,
         .secret = self->savedSecret };
     CLOG_DEBUG("nimble client is trying to join / rejoin server")
 
+#if defined TEST_HOST_MIGRATION
+    if (isServerClient) {
+        joinOptions.type = NimbleSerializeJoinGameTypeHostMigrationParticipantId;
+        joinOptions.participantId = 0x0a;
+        CLOG_DEBUG("nimble client is trying to join after host migration as participant %hhu", joinOptions.participantId)
+    }
+#else
+    (void) isServerClient;
+#endif
     nimbleEngineClientRequestJoin(&self->nimbleEngineClient, joinOptions);
 }
 
@@ -64,13 +73,13 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
 
 void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
     NimbleSerializeVersion version, ImprintAllocator* allocator,
-    ImprintAllocatorWithFree* allocatorWithFree, Clog log)
+    ImprintAllocatorWithFree* allocatorWithFree, bool isServerClient, Clog log)
 {
     self->log = log;
     setupSingleTransport(&self->singleTransport, allocator, allocatorWithFree);
     initNimbleEngineClient(&self->nimbleEngineClient, callbackObject,
         self->singleTransport.singleTransport, version, allocator, allocatorWithFree);
-    join(self);
+    join(self, isServerClient);
 }
 
 void exampleClientUpdate(ExampleClient* self)

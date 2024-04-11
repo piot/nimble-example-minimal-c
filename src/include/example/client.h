@@ -24,7 +24,7 @@ typedef struct ExampleClient {
 
 void exampleClientInit(ExampleClient* self, RectifyCallbackObject callbackObject,
     NimbleSerializeVersion version, struct ImprintAllocator* allocator,
-    struct ImprintAllocatorWithFree* allocatorWithFree, Clog log);
+    struct ImprintAllocatorWithFree* allocatorWithFree, bool isServerClient, Clog log);
 void exampleClientUpdate(ExampleClient* self);
 
 #endif

@@ -66,7 +66,7 @@ static ExamplePlayerInput constructPlayerInput(const ExampleGame* authoritative,
     }
 
     //CLOG_NOTICE(
-     //   "we are joined, compiling gamepad input to send for participant %02X", participantId)
+    //   "we are joined, compiling gamepad input to send for participant %02X", participantId)
     return gamepadToPlayerInput(gamepad);
 }
 
@@ -120,8 +120,9 @@ static void exampleClientAddInput(
         }
 
     } else {
-        uint8_t buf[1200];
-        datagramTransportReceive(&client->singleTransport.singleTransport, buf, 1200);
+        uint8_t buf[DATAGRAM_TRANSPORT_MAX_SIZE];
+        datagramTransportReceive(
+            &client->singleTransport.singleTransport, buf, DATAGRAM_TRANSPORT_MAX_SIZE);
     }
 }
 
@@ -142,7 +143,7 @@ int main(int argc, char* argv[])
     }
 
     ImprintDefaultSetup imprintDefaultSetup;
-    imprintDefaultSetupInit(&imprintDefaultSetup, 5 * 1024 * 1024);
+    imprintDefaultSetupInit(&imprintDefaultSetup, 32 * 1024 * 1024);
 
     ImprintAllocator* allocator = &imprintDefaultSetup.tagAllocator.info;
     ImprintAllocatorWithFree* allocatorWithFree = &imprintDefaultSetup.slabAllocator.info;
@@ -198,7 +199,7 @@ int main(int argc, char* argv[])
     };
 
     exampleClientInit(&app.client, callbackObject, applicationVersion, allocator, allocatorWithFree,
-        clientAppClog);
+        shouldHost, clientAppClog);
 
     app.client.autoJoinEnabled = true; // shouldHost;
 
@@ -211,8 +212,8 @@ int main(int argc, char* argv[])
 
     while (1) {
 #if defined USE_RENDER
-        uint32_t hash = mashMurmurHash3(
-            (const uint8_t*)&app.combinedGame.authoritative.game, sizeof(app.combinedGame.authoritative.game));
+        uint32_t hash = mashMurmurHash3((const uint8_t*)&app.combinedGame.authoritative.game,
+            sizeof(app.combinedGame.authoritative.game));
         exampleRenderUpdate(&render, &app.combinedGame, hash);
 #endif
         exampleClientAddInput(&app.client, &app.combinedGame.authoritative.game, &gamepad);
