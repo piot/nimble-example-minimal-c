@@ -84,7 +84,7 @@ static void handleInGameInput(
     ExampleGame* self, ExamplePlayer* player, const ExamplePlayerInput* playerInput)
 {
     if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
-        CLOG_NOTICE("player tried to play without an avatar, ignoring");
+        CLOG_NOTICE("player tried to play without an avatar, ignoring")
         return;
     }
     //CLOG_ASSERT(player->snakeIndex != EXAMPLE_ILLEGAL_INDEX, "illegal snake index");
@@ -272,7 +272,7 @@ static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithPartic
             participant->isUsed = true;
             participant->participantId = inputs[i].participantId;
             CLOG_DEBUG("we noticed a new participant with id %02X, lets spawn a player for it",
-                inputs[i].participantId);
+                inputs[i].participantId)
             ExamplePlayer* player = participantJoined(&self->players, participant, log);
             (void)player;
             // gameRulesForJoiningPlayer(self, player);
