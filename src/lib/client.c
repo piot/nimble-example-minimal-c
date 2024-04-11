@@ -89,7 +89,7 @@ void exampleClientUpdate(ExampleClient* self)
         nimbleEngineClientUpdate(&self->nimbleEngineClient);
     } else {
         // This is just to make sure transport is settled
-        uint8_t buf[UDP_CLIENT_MAX_OCTET_SIZE];
-        datagramTransportReceive(&self->singleTransport.singleTransport, buf, 1200);
+        uint8_t buf[DATAGRAM_TRANSPORT_MAX_SIZE];
+        datagramTransportReceive(&self->singleTransport.singleTransport, buf, DATAGRAM_TRANSPORT_MAX_SIZE);
     }
 }
