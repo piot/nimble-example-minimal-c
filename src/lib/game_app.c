@@ -86,7 +86,7 @@ static void gameAppTick(
             examplePlayerInputWithParticipantInfo->playerInput.inputType
                 = ExamplePlayerInputTypeEmpty;
             examplePlayerInputWithParticipantInfo->nimbleInputType
-                = ExamplePlayerEmptyInputTypeWaitingForReconnect;
+                = ExamplePlayerEmptyInputTypeWaitingForReJoin;
             break;
         case TransmuteParticipantInputTypeNormal:
             CLOG_ASSERT(participantInput->input != 0,

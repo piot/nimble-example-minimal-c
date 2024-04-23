@@ -61,12 +61,17 @@ typedef struct ExamplePlayers {
     uint8_t playerCount;
 } ExamplePlayers;
 
+typedef enum ExampleParticipantState {
+    ExampleParticipantStateNormal,
+    ExampleParticipantStateWaitingForRejoin,
+} ExampleParticipantState;
+
 typedef struct ExampleParticipant {
     uint8_t participantId;
     uint8_t playerIndex;
     uint8_t partyId;
     bool isUsed;
-    bool internalMarked;
+    ExampleParticipantState state;
 } ExampleParticipant;
 
 typedef struct ExampleSnakes {

@@ -6,6 +6,8 @@
 #include <example/render.h>
 #include <ncurses.h>
 
+static const short WAITING_FOR_REJOIN_COLOR = 16;
+
 void exampleRenderInit(ExampleRender* self, ExampleGameArea gameArea)
 {
     initscr();
@@ -24,6 +26,7 @@ void exampleRenderInit(ExampleRender* self, ExampleGameArea gameArea)
     init_pair(6, COLOR_YELLOW, COLOR_BLACK);
 
     init_pair(8, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(WAITING_FOR_REJOIN_COLOR, COLOR_WHITE, COLOR_BLACK);
 
     self->numberOfRows = getmaxy(stdscr);
     self->numberOfColumns = getmaxx(stdscr);
@@ -51,7 +54,7 @@ static void convertPosition(
     outRenderPosition->y = self->numberOfRows - 1 - (self->yOffset + simulationPosition.y);
 }
 
-static void drawGameArea(ExampleRender* self, ExampleGameArea gameArea)
+static void drawGameArea(ExampleRender* self, const ExampleGameArea gameArea)
 {
     int upper = self->numberOfRows - 1 - ((int)gameArea.height + 1);
     int lower = self->numberOfRows - 1;
@@ -65,7 +68,7 @@ static void drawGameArea(ExampleRender* self, ExampleGameArea gameArea)
     mvvline(upper, right, '*', gameArea.height + 2);
 }
 
-static void renderSnake(ExampleRender* self, ExampleSnake* snake)
+static void renderSnake(ExampleRender* self, const ExampleSnake* snake)
 {
     RenderPosition renderPos;
     convertPosition(self, snake->body[0], &renderPos);
@@ -101,14 +104,21 @@ static void renderHud(ExampleRender* self, StepId stepId, uint32_t hash)
     mvprintw(hashRenderPos.y, hashRenderPos.x, "%04X", hash);
 }
 
-static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId, uint32_t hash)
+static void render(ExampleRender* self, const ExampleGameAndStepId* gameAndStepId, uint32_t hash)
 {
-    ExampleGame* game = &gameAndStepId->game;
+    const ExampleGame* game = &gameAndStepId->game;
     drawGameArea(self, game->area);
 
     for (size_t i = 0; i < game->snakes.snakeCount; ++i) {
-        ExampleSnake* snake = &game->snakes.snakes[i];
-        int colorIndex = game->players.players[snake->controlledByPlayerIndex].playerIndex + 1;
+        const ExampleSnake* snake = &game->snakes.snakes[i];
+        const ExamplePlayer* player = &game->players.players[snake->controlledByPlayerIndex];
+        const ExampleParticipant* participant
+            = &game->participantLookup[player->assignedToParticipantIndex];
+
+        int colorIndex = player->playerIndex + 1;
+        if (participant->state == ExampleParticipantStateWaitingForRejoin) {
+            colorIndex = WAITING_FOR_REJOIN_COLOR;
+        }
 
         attron(COLOR_PAIR(colorIndex));
 
@@ -122,7 +132,7 @@ static void render(ExampleRender* self, ExampleGameAndStepId* gameAndStepId, uin
     renderHud(self, gameAndStepId->stepId, hash);
 }
 
-void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint32_t hash)
+void exampleRenderUpdate(ExampleRender* self, const ExampleGameApp* combinedGame, uint32_t hash)
 {
     (void)self;
 

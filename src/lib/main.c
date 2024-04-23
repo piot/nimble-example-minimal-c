@@ -76,8 +76,8 @@ static void createTransmuteInput(const ExampleClient* client, const ExampleGame*
     for (size_t i = 0U; i < useLocalPlayerCount; ++i) {
         const NimbleClientParticipantEntry* localPlayerEntry
             = &client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i];
-        CLOG_INFO("local player %hhu is apparently participant id: %hhu",
-            localPlayerEntry->localUserDeviceIndex, localPlayerEntry->participantId)
+        //CLOG_INFO("local player %hhu is apparently participant id: %hhu",
+        //  localPlayerEntry->localUserDeviceIndex, localPlayerEntry->participantId)
         inputs[i] = constructPlayerInput(
             authoritative, gamepad, localPlayerEntry->participantId, client->autoJoinEnabled);
 
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     }
 
     ImprintDefaultSetup imprintDefaultSetup;
-    imprintDefaultSetupInit(&imprintDefaultSetup, 32 * 1024 * 1024);
+    imprintDefaultSetupInit(&imprintDefaultSetup, 64 * 1024 * 1024);
 
     ImprintAllocator* allocator = &imprintDefaultSetup.tagAllocator.info;
     ImprintAllocatorWithFree* allocatorWithFree = &imprintDefaultSetup.slabAllocator.info;
@@ -172,6 +172,9 @@ int main(int argc, char* argv[])
     if (shouldHost) {
         exampleHostInit(&host, serverCallbackObject, app.combinedGame.authoritative.stepId,
             applicationVersion, allocator, allocatorWithFree);
+
+        imprintDefaultSetupDebugOutput(
+            &imprintDefaultSetup, "after nimbleServerInit");
     }
 
     RectifyCallbackObjectVtbl callbackKlass = {
@@ -197,9 +200,11 @@ int main(int argc, char* argv[])
     exampleClientInit(&app.client, callbackObject, applicationVersion, allocator, allocatorWithFree,
         shouldHost, clientAppClog);
 
+    imprintDefaultSetupDebugOutput(&imprintDefaultSetup, "after exampleClientInit");
+
     app.client.autoJoinEnabled = true; // shouldHost;
 
-    bool useRender = true;
+    bool useRender = false;
     ExampleRender render;
 
     if (useRender) {
@@ -221,6 +226,12 @@ int main(int argc, char* argv[])
             exampleHostUpdate(&host);
         }
         exampleSleepMs(16);
+
+        static uint16_t tick = 0;
+        tick++;
+        if ((tick % 60) == 0) {
+            imprintDefaultSetupDebugOutput(&imprintDefaultSetup, "tick");
+        }
     }
 
     //if (useRender) {

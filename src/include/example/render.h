@@ -15,7 +15,7 @@ typedef struct ExampleRender {
 } ExampleRender;
 
 void exampleRenderInit(ExampleRender* self, ExampleGameArea gameArea);
-void exampleRenderUpdate(ExampleRender* self, ExampleGameApp* combinedGame, uint32_t hash);
+void exampleRenderUpdate(ExampleRender* self, const ExampleGameApp* combinedGame, uint32_t hash);
 void exampleRenderClose(ExampleRender* self);
 
 #endif

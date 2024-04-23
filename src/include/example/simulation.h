@@ -12,7 +12,7 @@ struct Clog;
 /// Copy from nimble what kind of input that is used (to avoid dependency towards Nimble)
 typedef enum ExamplePlayerNimbleInputType {
     ExamplePlayerEmptyInputTypeNormal,
-    ExamplePlayerEmptyInputTypeWaitingForReconnect,
+    ExamplePlayerEmptyInputTypeWaitingForReJoin,
     ExamplePlayerEmptyInputTypeForced,
     ExamplePlayerEmptyInputTypeJoined,
     ExamplePlayerEmptyInputTypeLeft,

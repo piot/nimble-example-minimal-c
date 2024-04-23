@@ -270,14 +270,16 @@ void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithPartic
         ExampleParticipant* participant
             = &game->participantLookup[combinedPlayerInput->participantId];
 
-        CLOG_INFO("participant %hhu type: %d", combinedPlayerInput->participantId,
-            combinedPlayerInput->nimbleInputType)
+//        CLOG_INFO("participant %hhu type: %d", combinedPlayerInput->participantId,
+  //          combinedPlayerInput->nimbleInputType)
+
+        participant->state = ExampleParticipantStateNormal;
 
         switch (combinedPlayerInput->nimbleInputType) {
         case ExamplePlayerEmptyInputTypeJoined: {
             CLOG_INFO("participant joined %hhu", combinedPlayerInput->participantId)
-            participantJoined(
-                &game->players, participant, combinedPlayerInput->participantId, combinedPlayerInput->partyId, log);
+            participantJoined(&game->players, participant, combinedPlayerInput->participantId,
+                combinedPlayerInput->partyId, log);
         } break;
         case ExamplePlayerEmptyInputTypeLeft:
             if (!participant->isUsed) {
@@ -289,9 +291,13 @@ void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithPartic
             break;
         case ExamplePlayerEmptyInputTypeNormal:
             break;
-        case ExamplePlayerEmptyInputTypeWaitingForReconnect:
+        case ExamplePlayerEmptyInputTypeWaitingForReJoin:
+            participant->state = ExampleParticipantStateWaitingForRejoin;
             break;
         case ExamplePlayerEmptyInputTypeForced:
+            continue;
+        }
+        if (!participant->isUsed) {
             continue;
         }
         ExamplePlayer* player = &game->players.players[participant->playerIndex];

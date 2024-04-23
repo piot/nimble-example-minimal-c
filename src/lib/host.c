@@ -5,6 +5,7 @@
 #include <example/game.h>
 #include <example/host.h>
 #include <example/input.h>
+#include <imprint/slab_allocator.h>
 
 void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObject,
     StepId authoritativeStepId, const NimbleSerializeVersion applicationVersion,
@@ -64,8 +65,8 @@ void exampleHostInit(ExampleHost* self, NimbleServerCallbackObject callbackObjec
     // Since the whole game is blittable structs with no pointers, we can just cast it to an (uint8_t*)
     nimbleServerReInitWithGame(&self->nimbleServer, authoritativeStepId, monotonicTimeMsNow());
 
-//    NimbleSerializeParticipantId participantIds[] = { 0x02, 0x0a };
-  //  nimbleServerHostMigration(
+    //    NimbleSerializeParticipantId participantIds[] = { 0x02, 0x0a };
+    //  nimbleServerHostMigration(
     //    &self->nimbleServer, participantIds, sizeof(participantIds) / sizeof(participantIds[0]));
 }
 
@@ -74,4 +75,5 @@ void exampleHostUpdate(ExampleHost* self)
     CLOG_C_VERBOSE(&self->log, "host update()")
     transportStackMultiUpdate(&self->multiTransport);
     nimbleServerUpdate(&self->nimbleServer, monotonicTimeMsNow());
+
 }
