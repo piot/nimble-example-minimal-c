@@ -97,10 +97,15 @@ static void handleInGameInput(
 static void spawnAvatarForPlayer(ExampleGame* self, ExamplePlayer* player)
 {
     if (player->snakeIndex == EXAMPLE_ILLEGAL_INDEX) {
-        CLOG_NOTICE("player %02X did not have a snacke, spawning it now", player->playerIndex)
+        CLOG_NOTICE("participant %hhu (player index %02X) selected team and no avatar ",
+            player->assignedToParticipantIndex, player->playerIndex)
         player->snakeIndex = spawnAvatar(self, player->playerIndex);
+        CLOG_NOTICE("participant %hhu (player index %02X) has avatar (snake) %hhu",
+            player->assignedToParticipantIndex, player->playerIndex, player->snakeIndex)
     } else {
-        CLOG_NOTICE("player %02X already have snake, do not spawn", player->playerIndex)
+        CLOG_NOTICE(
+            "participant %hhu (player index %02X) selected team. already have an avatar %hhu",
+            player->assignedToParticipantIndex, player->playerIndex, player->snakeIndex)
     }
 }
 
@@ -192,23 +197,29 @@ static ExamplePlayer* spawnPlayer(ExamplePlayers* players, uint8_t participantId
     assignedPlayer->snakeIndex = EXAMPLE_ILLEGAL_INDEX;
     // assignedPlayer->preferredTeamId = NL_TEAM_UNDEFINED;
 
-    CLOG_NOTICE("spawning player: player index %02X for participant %02X",
+    CLOG_NOTICE("spawning player for participant %hhu (player index %02X)",
         assignedPlayer->playerIndex, participantId)
     return assignedPlayer;
 }
 
-static ExamplePlayer* participantJoined(
-    ExamplePlayers* players, ExampleParticipant* participant, Clog* log)
+static ExamplePlayer* participantJoined(ExamplePlayers* players, ExampleParticipant* participant,
+    uint8_t participantId, uint8_t partyId, Clog* log)
 {
     (void)log;
+    if (participant->isUsed) {
+        CLOG_ERROR("participant %hhu already in use", participantId)
+    }
+
+    participant->isUsed = true;
+    participant->participantId = participantId;
+    participant->partyId = partyId;
 
     ExamplePlayer* player = spawnPlayer(players, participant->participantId);
-    CLOG_C_INFO(log,
-        "participant has joined. player count is %hhu. created player %d for participant %d",
-        players->playerCount, player->playerIndex, participant->participantId)
-
     participant->playerIndex = player->playerIndex;
-    participant->isUsed = true;
+
+    CLOG_C_INFO(log,
+        "participant has joined. player count is %hhu. created player index %d for participant %d",
+        players->playerCount, player->playerIndex, participant->participantId)
 
     return player;
 }
@@ -251,54 +262,43 @@ static void participantLeft(ExamplePlayers* players, ExampleSnakes* avatars,
     participant->isUsed = false;
 }
 
-static void checkInputDiff(ExampleGame* self, const ExamplePlayerInputWithParticipantInfo* inputs,
-    size_t inputCount, Clog* log)
-{
-    if (inputCount != self->lastParticipantLookupCount) {
-        CLOG_C_INFO(log,
-            "a participant has either been added or removed, count is different. was %hhu and "
-            "is "
-            "now %zu",
-            self->lastParticipantLookupCount, inputCount)
-    }
-
-    for (size_t i = 0; i < EXAMPLE_GAME_MAX_PARTICIPANTS; ++i) {
-        self->participantLookup[i].internalMarked = false;
-    }
-
-    for (size_t i = 0; i < inputCount; ++i) {
-        ExampleParticipant* participant = &self->participantLookup[inputs[i].participantId];
-        if (!participant->isUsed) {
-            participant->isUsed = true;
-            participant->participantId = inputs[i].participantId;
-            CLOG_DEBUG("we noticed a new participant with id %02X, lets spawn a player for it",
-                inputs[i].participantId)
-            ExamplePlayer* player = participantJoined(&self->players, participant, log);
-            (void)player;
-            // gameRulesForJoiningPlayer(self, player);
-        }
-        if (participant->playerIndex != 0xff) {
-            self->players.players[participant->playerIndex].playerInput = inputs[i].playerInput;
-        }
-        participant->internalMarked = true;
-    }
-
-    for (size_t i = 0; i < EXAMPLE_GAME_MAX_PARTICIPANTS; ++i) {
-        ExampleParticipant* participant = &self->participantLookup[i];
-        if (participant->isUsed && !participant->internalMarked) {
-            CLOG_NOTICE("participant %02X left!?", participant->participantId)
-            // An active participants that is no longer in the provided inputs must be removed
-            participantLeft(
-                &self->players, &self->snakes, self->participantLookup, participant, log);
-        }
-    }
-
-    self->lastParticipantLookupCount = (uint8_t)inputCount;
-}
-
 void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithParticipantInfo* _input,
     const size_t inputCount, Clog* log)
 {
+    for (size_t i = 0; i < inputCount; ++i) {
+        const ExamplePlayerInputWithParticipantInfo* combinedPlayerInput = &_input[i];
+        ExampleParticipant* participant
+            = &game->participantLookup[combinedPlayerInput->participantId];
+
+        CLOG_INFO("participant %hhu type: %d", combinedPlayerInput->participantId,
+            combinedPlayerInput->nimbleInputType)
+
+        switch (combinedPlayerInput->nimbleInputType) {
+        case ExamplePlayerEmptyInputTypeJoined: {
+            CLOG_INFO("participant joined %hhu", combinedPlayerInput->participantId)
+            participantJoined(
+                &game->players, participant, combinedPlayerInput->participantId, combinedPlayerInput->partyId, log);
+        } break;
+        case ExamplePlayerEmptyInputTypeLeft:
+            if (!participant->isUsed) {
+                CLOG_ERROR("participant %hhu can not leave, participant was not in use",
+                    _input->participantId)
+            }
+            participantLeft(
+                &game->players, &game->snakes, game->participantLookup, participant, log);
+            break;
+        case ExamplePlayerEmptyInputTypeNormal:
+            break;
+        case ExamplePlayerEmptyInputTypeWaitingForReconnect:
+            break;
+        case ExamplePlayerEmptyInputTypeForced:
+            continue;
+        }
+        ExamplePlayer* player = &game->players.players[participant->playerIndex];
+
+        handleInput(game, player, &combinedPlayerInput->playerInput);
+    }
+
     if (game->ticksBetweenMoves != 0) {
         game->ticksBetweenMoves--;
         return;
@@ -308,17 +308,6 @@ void exampleSimulationTick(ExampleGame* game, const ExamplePlayerInputWithPartic
 
     if (game->gameIsOver) {
         return;
-    }
-
-    checkInputDiff(game, _input, inputCount, log);
-
-    for (size_t i = 0; i < inputCount; ++i) {
-        const ExamplePlayerInputWithParticipantInfo* combinedPlayerInput = &_input[i];
-        ExampleParticipant* participant
-            = &game->participantLookup[combinedPlayerInput->participantId];
-        ExamplePlayer* player = &game->players.players[participant->playerIndex];
-
-        handleInput(game, player, &combinedPlayerInput->playerInput);
     }
 
     simulateSnakes(game);

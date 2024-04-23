@@ -39,8 +39,8 @@ static void join(ExampleClient* self, bool isServerClient)
     NimbleEngineClientGameJoinOptions joinOptions = { .playerCount = useLocalPlayerCount,
         .players[0].localIndex = 99,
         .players[1].localIndex = 42,
-        .type = self->hasSavedSecret ? NimbleSerializeJoinGameTypeSecret : NimbleSerializeJoinGameTypeNoSecret,
-        .secret = self->savedSecret };
+        .type = self->hasSavedSecret ? NimbleSerializeJoinGameTypePartySecret : NimbleSerializeJoinGameTypeNoSecret,
+        .partyAndSessionSecret = self->savedPartySecret };
     CLOG_DEBUG("nimble client is trying to join / rejoin server")
 
 #if defined TEST_HOST_MIGRATION
@@ -63,7 +63,7 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
     singleLog.constantPrefix = "single";
 
     transportStackSingleInit(
-        self, allocator, allocatorWithFree, TransportStackModeLocalUdp, singleLog);
+        self, allocator, allocatorWithFree, TransportStackModeLocalUdp, false, singleLog);
 
     transportStackSingleConnect(self, "127.0.0.1", 23000);
 

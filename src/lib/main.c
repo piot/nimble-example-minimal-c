@@ -4,17 +4,12 @@
  *--------------------------------------------------------------------------------------------------------*/
 #include <clog/console.h>
 #include <example/app.h>
-#include <example/client.h>
 #include <example/gamepad.h>
 #include <example/host.h>
-#include <example/input.h>
 #include <example/render.h>
 #include <example/sleep.h>
-
 #include <imprint/default_setup.h>
 #include <mash/murmur.h>
-
-#define USE_RENDER
 
 clog_config g_clog;
 
@@ -79,15 +74,16 @@ static void createTransmuteInput(const ExampleClient* client, const ExampleGame*
     static TransmuteParticipantInput participantInputs[EXAMPLE_GAME_MAX_LOCAL_PLAYERS];
 
     for (size_t i = 0U; i < useLocalPlayerCount; ++i) {
-        uint8_t participantId
-            = client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i]
-                  .participantId;
-        inputs[i]
-            = constructPlayerInput(authoritative, gamepad, participantId, client->autoJoinEnabled);
+        const NimbleClientParticipantEntry* localPlayerEntry
+            = &client->nimbleEngineClient.nimbleClient.client.localParticipantLookup[i];
+        CLOG_INFO("local player %hhu is apparently participant id: %hhu",
+            localPlayerEntry->localUserDeviceIndex, localPlayerEntry->participantId)
+        inputs[i] = constructPlayerInput(
+            authoritative, gamepad, localPlayerEntry->participantId, client->autoJoinEnabled);
 
         participantInputs[i].input = &inputs[i];
         participantInputs[i].octetSize = sizeof(inputs[i]);
-        participantInputs[i].participantId = participantId;
+        participantInputs[i].participantId = localPlayerEntry->participantId;
         participantInputs[i].inputType = TransmuteParticipantInputTypeNormal;
     }
 
@@ -203,19 +199,21 @@ int main(int argc, char* argv[])
 
     app.client.autoJoinEnabled = true; // shouldHost;
 
-#if defined USE_RENDER
+    bool useRender = true;
     ExampleRender render;
-    exampleRenderInit(&render, app.combinedGame.authoritative.game.area);
-#endif
+
+    if (useRender) {
+        exampleRenderInit(&render, app.combinedGame.authoritative.game.area);
+    }
     ExampleGamepad gamepad;
     exampleGamepadInit(&gamepad);
 
     while (1) {
-#if defined USE_RENDER
-        uint32_t hash = mashMurmurHash3((const uint8_t*)&app.combinedGame.authoritative.game,
-            sizeof(app.combinedGame.authoritative.game));
-        exampleRenderUpdate(&render, &app.combinedGame, hash);
-#endif
+        if (useRender) {
+            uint32_t hash = mashMurmurHash3((const uint8_t*)&app.combinedGame.authoritative.game,
+                sizeof(app.combinedGame.authoritative.game));
+            exampleRenderUpdate(&render, &app.combinedGame, hash);
+        }
         exampleClientAddInput(&app.client, &app.combinedGame.authoritative.game, &gamepad);
         exampleClientUpdate(&app.client);
         if (shouldHost) {
@@ -225,9 +223,9 @@ int main(int argc, char* argv[])
         exampleSleepMs(16);
     }
 
-#if defined USE_RENDER
+    //if (useRender) {
     //exampleRenderClose(&render);
-#endif
+    //}
 
     //    return 0;
 }

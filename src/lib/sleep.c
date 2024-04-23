@@ -15,6 +15,6 @@ void exampleSleepMs(size_t milliseconds)
 
     int err = nanosleep(&ts, &ts);
     if (err != 0) {
-        CLOG_ERROR("NOT WORKING:%d", errno)
+       // CLOG_ERROR("NOT WORKING:%d", errno)
     }
 }

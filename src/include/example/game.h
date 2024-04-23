@@ -64,6 +64,7 @@ typedef struct ExamplePlayers {
 typedef struct ExampleParticipant {
     uint8_t participantId;
     uint8_t playerIndex;
+    uint8_t partyId;
     bool isUsed;
     bool internalMarked;
 } ExampleParticipant;

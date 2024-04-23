@@ -79,7 +79,7 @@ static void gameAppTick(
             examplePlayerInputWithParticipantInfo->nimbleInputType
                 = ExamplePlayerEmptyInputTypeForced;
             break;
-        case TransmuteParticipantInputTypeWaitingForReconnect:
+        case TransmuteParticipantInputTypeWaitingForReJoin:
             //CLOG_C_VERBOSE(log, "authoritativeTick(waitingForReconnect)")
             CLOG_ASSERT(participantInput->input == 0, "input should be null on WaitingForReconnect")
             tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
@@ -95,6 +95,17 @@ static void gameAppTick(
                 = *(const ExamplePlayerInput*)participantInput->input;
             examplePlayerInputWithParticipantInfo->nimbleInputType
                 = ExamplePlayerEmptyInputTypeNormal;
+            break;
+        case TransmuteParticipantInputTypeJoined:
+            examplePlayerInputWithParticipantInfo->partyId = participantInput->localPartyId;
+            CLOG_DEBUG("Participant %hhu joined from local party %d",
+                participantInput->participantId, participantInput->localPartyId)
+            examplePlayerInputWithParticipantInfo->nimbleInputType
+                = ExamplePlayerEmptyInputTypeJoined;
+            break;
+        case TransmuteParticipantInputTypeLeft:
+            examplePlayerInputWithParticipantInfo->nimbleInputType
+                = ExamplePlayerEmptyInputTypeLeft;
             break;
         }
     }
@@ -120,8 +131,8 @@ void gameAppAuthoritativeTick(void* _self, const TransmuteInput* _input, StepId 
 void gameAppCopyFromAuthoritativeToPrediction(void* _self, StepId tickId)
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
-   // CLOG_C_VERBOSE(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId,
-     //   self->authoritative.stepId)
+    // CLOG_C_VERBOSE(&self->log, "CopyFromAuthoritative(%04X) to predicted (%04X)", tickId,
+    //   self->authoritative.stepId)
     (void)tickId;
     CLOG_ASSERT(tickId == self->authoritative.stepId, "authoritative tick ID is wrong")
     self->predicted = self->authoritative;
@@ -131,11 +142,11 @@ void gameAppPredictionTick(void* _self, const TransmuteInput* _input, StepId ste
 {
     ExampleGameApp* self = (ExampleGameApp*)_self;
     CLOG_C_VERBOSE(&self->log, "PredictionTick()")
-    #if defined CLOG_ENABLED
+#if defined CLOG_ENABLED
     CLOG_ASSERT(stepId == self->predicted.stepId, "predicted tick ID is wrong")
-    #else
-    (void) stepId;
-    #endif
+#else
+    (void)stepId;
+#endif
     gameAppTick(&self->predicted, _input, &self->log);
 }
 

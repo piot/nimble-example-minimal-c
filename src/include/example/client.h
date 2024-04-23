@@ -18,7 +18,7 @@ typedef struct ExampleClient {
     NimbleEngineClient nimbleEngineClient;
     Clog log;
     bool hasSavedSecret;
-    NimbleSerializeParticipantConnectionSecret savedSecret;
+    NimbleSerializePartyAndSessionSecret savedPartySecret;
     bool autoJoinEnabled;
 } ExampleClient;
 
