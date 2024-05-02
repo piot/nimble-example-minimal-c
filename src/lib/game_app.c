@@ -79,7 +79,7 @@ static void gameAppTick(
             examplePlayerInputWithParticipantInfo->nimbleInputType
                 = ExamplePlayerEmptyInputTypeForced;
             break;
-        case TransmuteParticipantInputTypeWaitingForReconnect:
+        case TransmuteParticipantInputTypeWaitingForReJoin:
             //CLOG_C_VERBOSE(log, "authoritativeTick(waitingForReconnect)")
             CLOG_ASSERT(participantInput->input == 0, "input should be null on WaitingForReconnect")
             tc_mem_clear_type(&examplePlayerInputWithParticipantInfo->playerInput);
@@ -95,6 +95,10 @@ static void gameAppTick(
                 = *(const ExamplePlayerInput*)participantInput->input;
             examplePlayerInputWithParticipantInfo->nimbleInputType
                 = ExamplePlayerEmptyInputTypeNormal;
+            break;
+        case TransmuteParticipantInputTypeJoined:
+            break;
+        case TransmuteParticipantInputTypeLeft:
             break;
         }
     }

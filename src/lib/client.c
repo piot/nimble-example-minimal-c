@@ -63,7 +63,7 @@ static void setupSingleTransport(TransportStackSingle* self, ImprintAllocator* a
     singleLog.constantPrefix = "single";
 
     transportStackSingleInit(
-        self, allocator, allocatorWithFree, TransportStackModeLocalUdp, singleLog);
+        self, allocator, allocatorWithFree, TransportStackModeLocalUdp, true, singleLog);
 
     transportStackSingleConnect(self, "127.0.0.1", 23000);
 
